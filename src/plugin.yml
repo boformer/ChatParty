@@ -1,0 +1,30 @@
+name: ChatParty
+main: com.github.schmidtbochum.chatparty.ChatPartyPlugin
+version: 0.1.0
+description: >
+             Party Chat Plugin
+commands:
+  p:
+    description: Send a party chat message
+    permission: chatparty.user
+    usage: "/p <message>"
+  party:
+    description: Join, manage and create chat parties
+    permission: chatparty.user
+    usage: "Command Help: /party help"
+permissions:
+    chatparty.user:
+        description: Enter parties and chat
+        default: op
+    chatparty.leader:
+        description: Create parties and invite players
+        default: op
+        children:
+        - chatparty.user
+    chatparty.admin:
+        description: Ability to see all party chats (SocialSpy)
+        default: op
+        children:
+        - chatparty.leader
+        
+        
