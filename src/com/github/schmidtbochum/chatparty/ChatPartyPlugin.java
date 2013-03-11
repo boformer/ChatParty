@@ -22,6 +22,7 @@ package com.github.schmidtbochum.chatparty;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,6 +32,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -38,12 +40,17 @@ public class ChatPartyPlugin extends JavaPlugin
 {
 	private HashMap<String, Party> activeParties;
 	private ArrayList<Player> spyPlayers;
+	private boolean config_invertP;
+	private boolean config_toggleWithP;
 	
 	public void onEnable()
 	{
 		// copy default config
 		getConfig().options().copyDefaults(true);
 		saveConfig();
+		
+		config_invertP = getConfig().getBoolean("invertP");
+		config_toggleWithP = getConfig().getBoolean("toggleWithP");
 		
 		activeParties = new HashMap<String, Party>();
 		spyPlayers = new ArrayList<Player>();
@@ -56,10 +63,12 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 		getServer().getPluginManager().registerEvents(new PlayerEventHandler(this), this);
 	}
+	
 	public void onDisable()
 	{
 		saveConfig();
 	}
+	
 	public void saveParty(Party party) 
 	{
 		ConfigurationSection partySection = getConfig().getConfigurationSection("parties").createSection(party.name);
@@ -68,6 +77,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		saveConfig();
 		reloadConfig();
 	}
+	
 	public Party getPlayerParty(Player player) 
 	{
 		String partyName = getConfig().getConfigurationSection("players").getString(player.getName());
@@ -80,6 +90,7 @@ public class ChatPartyPlugin extends JavaPlugin
 			return null;
 		}
 	}
+	
 	public void registerSpy(Player player) 
 	{
 		if(getConfig().getStringList("spy").contains(player.getName()))
@@ -87,10 +98,12 @@ public class ChatPartyPlugin extends JavaPlugin
 			spyPlayers.add(player);
 		}
 	}
+	
 	public void unregisterSpy(Player player) 
 	{
 		spyPlayers.remove(player);
 	}
+	
 	public boolean toggleSpy(Player player) 
 	{
 		List<String> list = getConfig().getStringList("spy");
@@ -111,6 +124,22 @@ public class ChatPartyPlugin extends JavaPlugin
 		saveConfig();
 		return result;
 	}
+	
+	private boolean toggleChat(Player player)
+	{
+		if(player.hasMetadata("partyToggle"))
+		{
+			player.removeMetadata("partyToggle", this);
+			return false;
+		}
+		else
+		{
+			player.setMetadata("partyToggle", new FixedMetadataValue(this, true));
+			return true;
+		}
+	}
+	
+	
 	public void sendSpyPartyMessage(Party party, String message) 
 	{
 		for(Player player : spyPlayers) 
@@ -120,17 +149,14 @@ public class ChatPartyPlugin extends JavaPlugin
 				player.sendMessage(ChatColor.GRAY + "[" + party.shortName + "] " + message);
 			}
 		}
+		getLogger().info("[" + party.shortName + "] " + message);
 	}
+	
 	public void sendSpyChatMessage(Party party, Player sender, String message) 
 	{
-		for(Player player : spyPlayers) 
-		{
-			if(player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || party.name != player.getMetadata("party").get(0).asString()))  
-			{
-				player.sendMessage(ChatColor.GRAY + "[" + party.shortName + "] " + sender.getName() +  ": " + message);
-			}
-		}
+		sendSpyPartyMessage(party, sender.getName() +  ": " + message);
 	}
+	
 	public Party loadParty(String name) 
 	{
 		Party party = activeParties.get(name);
@@ -157,6 +183,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 		return party;
 	}
+	
 	private void disbandParty(Party party)
 	{
 		for(String playerName : party.members) 
@@ -188,7 +215,6 @@ public class ChatPartyPlugin extends JavaPlugin
 		this.getLogger().info("Disbanded the chat party \"" + party.name + "\".");
 	}
 	
-	
 	public void savePlayer(Player player) 
 	{
 		ConfigurationSection playerSection = getConfig().getConfigurationSection("players");
@@ -204,7 +230,6 @@ public class ChatPartyPlugin extends JavaPlugin
 		}
 		saveConfig();
 	}
-	
 	
 	public void removePlayer(String playerName) 
 	{
@@ -222,7 +247,10 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 	}
 	
-	
+	public void sendMessage(Player player, String message) 
+	{
+		player.sendMessage(ChatColor.AQUA + message);
+	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd,	String commandLabel, String[] args) 
 	{
@@ -252,13 +280,27 @@ public class ChatPartyPlugin extends JavaPlugin
 			}
 			if(args.length == 0) 
 			{
-				return false;
+				if(!config_toggleWithP)
+				{
+					return false;
+				}
+				else
+				{
+					boolean enabled = toggleChat(player);
+					
+					if(enabled) 
+					{
+						sendMessage(player, "Toggled Party Chat.");
+					}
+					else
+					{
+						sendMessage(player, "Detoggled Party Chat.");
+					}
+					return true;
+				}
 			}
 			
 			//CONDITIONS END
-			
-			String partyName = player.getMetadata("party").get(0).asString();
-			Party party = loadParty(partyName);
 			
 			StringBuilder builder = new StringBuilder();
 			for(String word : args) 
@@ -270,6 +312,16 @@ public class ChatPartyPlugin extends JavaPlugin
 			}
 			
 			String message = builder.toString();
+			
+			if(config_invertP && player.hasMetadata("partyToggle")) 
+			{
+				player.setMetadata("ignore", new FixedMetadataValue(this, true));
+				player.chat(message);
+				return true;
+			}
+			
+			String partyName = player.getMetadata("party").get(0).asString();
+			Party party = loadParty(partyName);
 			
 			party.sendPlayerMessage(player, message);
 			sendSpyChatMessage(party, player, message);
@@ -296,6 +348,7 @@ public class ChatPartyPlugin extends JavaPlugin
 					sendMessage(player, "/p <message>" + ChatColor.WHITE + ": Send a message to your party");
 					sendMessage(player, "/party leave" + ChatColor.WHITE + ": Leave your party");
 					sendMessage(player, "/party members" + ChatColor.WHITE + ": Show the member list");
+					sendMessage(player, "/party toggle" + ChatColor.WHITE + ": Toggle the party chat");
 					if(player.hasMetadata("isPartyLeader") && player.hasPermission("chatparty.leader")) 
 					{
 						sendMessage(player, "/party invite <player>" + ChatColor.WHITE + ": Invite a player to your party");
@@ -668,6 +721,12 @@ public class ChatPartyPlugin extends JavaPlugin
 			{
 				//CONDITIONS
 				
+				if(!player.hasPermission("chatparty.user")) 
+				{
+					sendMessage(player, "You do not have access to that command.");
+					return true;
+				}
+				
 				if(!player.hasMetadata("party")) 
 				{
 					sendMessage(player, "You are not in a party.");
@@ -735,15 +794,40 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				return true;
 			}
+			else if(args[0].equalsIgnoreCase("toggle")) 
+			{
+				//CONDITIONS
+				
+				if(!player.hasPermission("chatparty.user")) 
+				{
+					sendMessage(player, "You do not have access to that command.");
+					return true;
+				}
+				
+				if(!player.hasMetadata("party")) 
+				{
+					sendMessage(player, "You are not in a party.");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					return true;
+				}
+				
+				//CONDITIONS END
+				
+				boolean enabled = toggleChat(player);
+				
+				if(enabled) 
+				{
+					sendMessage(player, "Toggled Party Chat.");
+				}
+				else
+				{
+					sendMessage(player, "Detoggled Party Chat.");
+				}
+				
+				return true;
+			}
 			
 		}
 		return false;
 	}
-
-	public void sendMessage(Player player, String message) 
-	{
-		player.sendMessage(ChatColor.AQUA + message);
-	}
-	
-	
 }

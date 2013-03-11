@@ -1,4 +1,8 @@
 # ChatParty Configuaration File
+# invertP: Send a message to the public with /p <message> when party chat is toggled
+# toggleWithP: Toggle the party chat when /p without arguments is entered (not newbie-friendly)
+invertP: false
+toggleWithP: false
 players: {}
 parties: {}
 spy: []

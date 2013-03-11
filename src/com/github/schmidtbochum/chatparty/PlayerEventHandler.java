@@ -23,6 +23,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -81,5 +82,29 @@ public class PlayerEventHandler implements Listener
 			player.removeMetadata("isPartyLeader", plugin);
 		}
 		plugin.unregisterSpy(player);
+	}
+	@EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+	void onPlayerChat(AsyncPlayerChatEvent event) 
+	{
+		Player player = event.getPlayer();
+		
+		if(player.hasMetadata("ignore")) 
+		{
+			player.removeMetadata("ignore", plugin);
+			return;
+		}
+		
+		if(player.hasMetadata("partyToggle")  && player.hasMetadata("party"))
+		{
+			String message = event.getMessage();
+
+			String partyName = player.getMetadata("party").get(0).asString();
+			Party party = plugin.loadParty(partyName);
+			
+			party.sendPlayerMessage(player, message);
+			plugin.sendSpyChatMessage(party, player, message);
+			
+			event.setCancelled(true);
+		}
 	}
 }
