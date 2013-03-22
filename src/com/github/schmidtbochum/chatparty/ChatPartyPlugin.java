@@ -706,6 +706,7 @@ public class ChatPartyPlugin extends JavaPlugin
 				if(onlinePlayer != null)
 				{
 					onlinePlayer.removeMetadata("party", this);
+					party.activePlayers.remove(onlinePlayer);
 					sendMessage(onlinePlayer, "You were kicked from the party \"" + party.name + "\".");
 				}
 				
