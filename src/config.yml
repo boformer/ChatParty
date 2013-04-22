@@ -1,6 +1,10 @@
 # ChatParty Configuaration File
 # invertP: Send a message to the public with /p <message> when party chat is toggled
 # toggleWithP: Toggle the party chat when /p without arguments is entered (not newbie-friendly)
+# messageColor: Color of the plugin messages
+# chatFormat: Format of the party chat messages. Placeholders: {PARTYNAME}, {DISPLAYNAME}, {MESSAGE}
+messageColor: '&b'
+chatFormat: '&a[P] &f{DISPLAYNAME}&f: {MESSAGE}'
 invertP: false
 toggleWithP: false
 players: {}

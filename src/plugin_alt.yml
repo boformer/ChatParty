@@ -4,29 +4,29 @@ version: 0.3.0
 description: >
              Party Chat Plugin
 commands:
-  p:
-    description: Send a party chat message
+  g:
+    description: Send a guild chat message
     permission: chatparty.user
-    usage: "/p <message>"
-  party:
-    description: Join, manage and create chat parties
+    usage: "/g <message>"
+  guild:
+    description: Join, manage and create chat guilds
     permission: chatparty.user
-    usage: "Command Help: /party help"
+    usage: "Command Help: /guild help"
   chat:
     description: Toggle the global chat.
     permission: chatparty.user
-    usage: "Command Help: /party help"
+    usage: "Command Help: /guild help"
 permissions:
     chatparty.user:
-        description: Enter parties and chat
+        description: Enter guilds and chat
         default: op
     chatparty.leader:
-        description: Create parties and invite players
+        description: Create guilds and invite players
         default: op
         children:
         - chatparty.user
     chatparty.admin:
-        description: Ability to see all party chats (SocialSpy)
+        description: Ability to see all guild chats (SocialSpy)
         default: op
         children:
         - chatparty.leader

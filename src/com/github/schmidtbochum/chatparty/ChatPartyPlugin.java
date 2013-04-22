@@ -22,7 +22,6 @@ package com.github.schmidtbochum.chatparty;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,7 +31,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -42,6 +40,13 @@ public class ChatPartyPlugin extends JavaPlugin
 	private ArrayList<Player> spyPlayers;
 	private boolean config_invertP;
 	private boolean config_toggleWithP;
+	public ChatColor config_messageColor;
+	public String config_chatFormat;
+	public final boolean GUILD_MODE = false;
+	public final String TEXT_PARTY = (GUILD_MODE ? "guild" : "party");
+	public final String TEXT_PARTY2 = (GUILD_MODE ? "Guild" : "Party");
+	public final String TEXT_PARTIES = (GUILD_MODE ? "guilds" : "parties");
+	public final String TEXT_P = (GUILD_MODE ? "g" : "p");
 	
 	public void onEnable()
 	{
@@ -51,6 +56,9 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 		config_invertP = getConfig().getBoolean("invertP");
 		config_toggleWithP = getConfig().getBoolean("toggleWithP");
+		config_chatFormat = ChatColor.translateAlternateColorCodes('&', getConfig().getString("chatFormat"));
+		config_messageColor = ChatColor.getByChar(getConfig().getString("messageColor").substring(1));
+		if(config_messageColor == null) config_messageColor = ChatColor.WHITE;
 		
 		activeParties = new HashMap<String, Party>();
 		spyPlayers = new ArrayList<Player>();
@@ -66,7 +74,7 @@ public class ChatPartyPlugin extends JavaPlugin
 	
 	public void onDisable()
 	{
-		saveConfig();
+		//saveConfig();
 	}
 	
 	public void saveParty(Party party) 
@@ -125,7 +133,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		return result;
 	}
 	
-	private boolean toggleChat(Player player)
+	private boolean togglePartyChat(Player player)
 	{
 		if(player.hasMetadata("partyToggle"))
 		{
@@ -138,7 +146,19 @@ public class ChatPartyPlugin extends JavaPlugin
 			return true;
 		}
 	}
-	
+	private boolean toggleGlobalChat(Player player)
+	{
+		if(player.hasMetadata("globalChatToggle"))
+		{
+			player.removeMetadata("globalChatToggle", this);
+			return false;
+		}
+		else
+		{
+			player.setMetadata("globalChatToggle", new FixedMetadataValue(this, true));
+			return true;
+		}
+	}
 	
 	public void sendSpyPartyMessage(Party party, String message) 
 	{
@@ -163,7 +183,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 		if(party == null) 
 		{
-			party = new Party(name);
+			party = new Party(name, this);
 			
 			ConfigurationSection partySection = getConfig().getConfigurationSection("parties." + name);
 			
@@ -212,7 +232,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		
 		saveConfig();
 		
-		this.getLogger().info("Disbanded the chat party \"" + party.name + "\".");
+		this.getLogger().info("Disbanded the chat "+TEXT_PARTY+" \"" + party.name + "\".");
 	}
 	
 	public void savePlayer(Player player) 
@@ -249,7 +269,7 @@ public class ChatPartyPlugin extends JavaPlugin
 	
 	public void sendMessage(Player player, String message) 
 	{
-		player.sendMessage(ChatColor.AQUA + message);
+		player.sendMessage(config_messageColor + message);
 	}
 	
 	public boolean onCommand(CommandSender sender, Command cmd,	String commandLabel, String[] args) 
@@ -263,7 +283,7 @@ public class ChatPartyPlugin extends JavaPlugin
 		{
 			return false;
 		}
-		if(cmd.getName().equalsIgnoreCase("p")) 
+		if(cmd.getName().equalsIgnoreCase(TEXT_P)) 
 		{
 			//CONDITIONS
 			
@@ -274,8 +294,8 @@ public class ChatPartyPlugin extends JavaPlugin
 			}
 			if(!player.hasMetadata("party")) 
 			{
-				sendMessage(player, "You are not in a party.");
-				if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+				sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+				if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 				return true;
 			}
 			if(args.length == 0) 
@@ -286,15 +306,15 @@ public class ChatPartyPlugin extends JavaPlugin
 				}
 				else
 				{
-					boolean enabled = toggleChat(player);
+					boolean enabled = togglePartyChat(player);
 					
 					if(enabled) 
 					{
-						sendMessage(player, "Toggled Party Chat.");
+						sendMessage(player, "Toggled "+TEXT_PARTY+" chat.");
 					}
 					else
 					{
-						sendMessage(player, "Detoggled Party Chat.");
+						sendMessage(player, "Detoggled "+TEXT_PARTY+" chat.");
 					}
 					return true;
 				}
@@ -315,9 +335,17 @@ public class ChatPartyPlugin extends JavaPlugin
 			
 			if(config_invertP && player.hasMetadata("partyToggle")) 
 			{
-				player.setMetadata("ignore", new FixedMetadataValue(this, true));
-				player.chat(message);
-				return true;
+				if(!player.hasMetadata("globalChatToggle"))
+				{
+					player.setMetadata("ignore", new FixedMetadataValue(this, true));
+					player.chat(message);
+					return true;
+				}
+				else
+				{
+					sendMessage(player, "Message cancelled. Type /chat to enable the global chat.");
+					return true;
+				}
 			}
 			
 			String partyName = player.getMetadata("party").get(0).asString();
@@ -326,8 +354,31 @@ public class ChatPartyPlugin extends JavaPlugin
 			party.sendPlayerMessage(player, message);
 			sendSpyChatMessage(party, player, message);
 			return true;
-		} 
-		else if(cmd.getName().equalsIgnoreCase("party")) 
+		}
+		else if(cmd.getName().equalsIgnoreCase("chat")) 
+		{
+			//CONDITIONS
+			
+			if(!player.hasPermission("chatparty.user")) 
+			{
+				sendMessage(player, "You do not have access to that command.");
+				return true;
+			}
+			//CONDITIONS END
+			
+			boolean toggled = toggleGlobalChat(player);
+			
+			if(toggled)
+			{
+				sendMessage(player, "The global chat is now hidden. Type /chat to enable the global chat.");
+			}
+			else {
+				sendMessage(player, "The global chat is now visible.");
+			}
+			return true;
+		}
+		
+		else if(cmd.getName().equalsIgnoreCase(TEXT_PARTY)) 
 		{
 			//CONDITIONS
 			
@@ -341,33 +392,35 @@ public class ChatPartyPlugin extends JavaPlugin
 			
 			if(args.length == 0 || args[0].equalsIgnoreCase("help")) 
 			{
-				sendMessage(player, "--- Party Help ---");
+				sendMessage(player, "--- "+TEXT_PARTY2+" Help ---");
+				
+				sendMessage(player, "/chat" + ChatColor.WHITE + ": Toggle the public chat.");
 				
 				if(player.hasMetadata("party")) 
 				{
-					sendMessage(player, "/p <message>" + ChatColor.WHITE + ": Send a message to your party");
-					sendMessage(player, "/party leave" + ChatColor.WHITE + ": Leave your party");
-					sendMessage(player, "/party members" + ChatColor.WHITE + ": Show the member list");
-					sendMessage(player, "/party toggle" + ChatColor.WHITE + ": Toggle the party chat");
+					sendMessage(player, "/"+TEXT_P+" <message>" + ChatColor.WHITE + ": Send a message to your "+TEXT_PARTY+"");
+					sendMessage(player, "/"+TEXT_PARTY+" leave" + ChatColor.WHITE + ": Leave your "+TEXT_PARTY+"");
+					sendMessage(player, "/"+TEXT_PARTY+" members" + ChatColor.WHITE + ": Show the member list");
+					sendMessage(player, "/"+TEXT_PARTY+" toggle" + ChatColor.WHITE + ": Toggle the "+TEXT_PARTY+" chat");
 					if(player.hasMetadata("isPartyLeader") && player.hasPermission("chatparty.leader")) 
 					{
-						sendMessage(player, "/party invite <player>" + ChatColor.WHITE + ": Invite a player to your party");
-						sendMessage(player, "/party kick <player>" + ChatColor.WHITE + ": Kick a player from your party");
+						sendMessage(player, "/"+TEXT_PARTY+" invite <player>" + ChatColor.WHITE + ": Invite a player to your "+TEXT_PARTY+"");
+						sendMessage(player, "/"+TEXT_PARTY+" kick <player>" + ChatColor.WHITE + ": Kick a player from your "+TEXT_PARTY+"");
 						//sendMessage(player, "/party name <name>" + ChatColor.WHITE + ": Rename your party.");
-						sendMessage(player, "/party leader <player>" + ChatColor.WHITE + ": Add a leader to your party");
+						sendMessage(player, "/"+TEXT_PARTY+" leader <player>" + ChatColor.WHITE + ": Add a leader to your "+TEXT_PARTY+"");
 					}
 				}
 				else
 				{
-					sendMessage(player, "/party join" + ChatColor.WHITE + ": Accept a party invitation");
+					sendMessage(player, "/"+TEXT_PARTY+" join" + ChatColor.WHITE + ": Accept a "+TEXT_PARTY+" invitation");
 					if(player.hasPermission("chatparty.leader"))
 					{
-						sendMessage(player, "/party create <name>" + ChatColor.WHITE + ": Create a new chat party");
+						sendMessage(player, "/"+TEXT_PARTY+" create <name>" + ChatColor.WHITE + ": Create a new chat "+TEXT_PARTY+"");
 					}
 				}
 				if(player.hasPermission("chatparty.admin"))
 				{
-					sendMessage(player, "/party spy" + ChatColor.WHITE + ": Toggle messages from all parties.");
+					sendMessage(player, "/"+TEXT_PARTY+" spy" + ChatColor.WHITE + ": Toggle messages from all "+TEXT_PARTIES+".");
 				}
 				return true;
 			} 
@@ -377,8 +430,8 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("partyInvitation")) 
 				{
-					sendMessage(player, "No active party invitation.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "No active "+TEXT_PARTY+" invitation.");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 					
@@ -387,8 +440,8 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(party == null) 
 				{
-					sendMessage(player, "No active party invitation.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "No active "+TEXT_PARTY+" invitation.");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				} 
 				
@@ -396,16 +449,16 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				player.removeMetadata("partyInvitation", this);
 				
-				party.sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " joined the party.");
-				sendSpyPartyMessage(party, player.getName() + " joined the party.");
+				party.sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " joined the "+TEXT_PARTY+".");
+				sendSpyPartyMessage(party, player.getName() + " joined the "+TEXT_PARTY+".");
 				
 				party.members.add(player.getName());
 				party.activePlayers.add(player);
 				
 				player.setMetadata("party", new FixedMetadataValue(this, party.name));
 				
-				sendMessage(player, "You joined the party \"" +  party.name +"\".");
-				sendMessage(player, "Chat with /p <message>");
+				sendMessage(player, "You joined the "+TEXT_PARTY+" \"" +  party.name +"\".");
+				sendMessage(player, "Chat with /"+TEXT_P+" <message>");
 				
 				savePlayer(player);
 				saveParty(party);
@@ -417,8 +470,8 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
@@ -438,16 +491,16 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(party.leaders.size() == 0) 
 				{
-					party.sendPartyMessage("The party was disbanded because all leaders left.");
-					sendSpyPartyMessage(party, "The party was disbanded.");
+					party.sendPartyMessage("The "+TEXT_PARTY+" was disbanded because all leaders left.");
+					sendSpyPartyMessage(party, "The "+TEXT_PARTY+" was disbanded.");
 					disbandParty(party);
 				}
 				
 				
-				party.sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " left the party.");
-				sendSpyPartyMessage(party, player.getName() + " left the party.");
+				party.sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " left the "+TEXT_PARTY+".");
+				sendSpyPartyMessage(party, player.getName() + " left the "+TEXT_PARTY+".");
 				
-				sendMessage(player, "You left the party \"" +  party.name +"\".");
+				sendMessage(player, "You left the "+TEXT_PARTY+" \"" +  party.name +"\".");
 				
 				savePlayer(player);
 				saveParty(party);
@@ -465,20 +518,20 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
 				if(!player.hasMetadata("isPartyLeader")) 
 				{
-					sendMessage(player, "Only party leaders can invite other players.");
+					sendMessage(player, "Only "+TEXT_PARTY+" leaders can invite other players.");
 					return true;
 				}
 				
 				if(args.length != 2) 
 				{
-					sendMessage(player, "Usage: /party invite <player>");
+					sendMessage(player, "Usage: /"+TEXT_PARTY+" invite <player>");
 					return true;
 				}
 				
@@ -493,13 +546,13 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!invitedPlayer.hasPermission("chatparty.user"))
 				{
-					sendMessage(player, "The player does not have the permission for the party system.");
+					sendMessage(player, "The player does not have the permission for the "+TEXT_PARTY+" system.");
 					return true;
 				}
 				
 				if(invitedPlayer.hasMetadata("party"))
 				{
-					sendMessage(player, "The player is already in a party.");
+					sendMessage(player, "The player is already in a "+TEXT_PARTY+".");
 					return true;
 				}
 				
@@ -510,10 +563,10 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				invitedPlayer.setMetadata("partyInvitation", new FixedMetadataValue(this, party.name));
 				
-				sendMessage(player, "You invited " +  invitedPlayer.getName() + " to your party.");
+				sendMessage(player, "You invited " +  invitedPlayer.getName() + " to your "+TEXT_PARTY+".");
 				
-				sendMessage(invitedPlayer, player.getName() + " invited you to the party \"" + party.name + "\".");
-				sendMessage(invitedPlayer, "To accept the invitation, type /party join");
+				sendMessage(invitedPlayer, player.getName() + " invited you to the "+TEXT_PARTY+" \"" + party.name + "\".");
+				sendMessage(invitedPlayer, "To accept the invitation, type /"+TEXT_PARTY+" join");
 				return true;
 			}
 			else if(args[0].equalsIgnoreCase("create")) 
@@ -528,13 +581,13 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are already in a party.");
+					sendMessage(player, "You are already in a "+TEXT_PARTY+".");
 					return true;
 				}
 				
 				if(args.length != 2) 
 				{
-					sendMessage(player, "Usage: /party create <name>");
+					sendMessage(player, "Usage: /"+TEXT_PARTY+" create <name>");
 					return true;
 				}
 				
@@ -563,7 +616,7 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				//CONDITIONS END
 				
-				Party party = new Party(partyName);
+				Party party = new Party(partyName, this);
 				
 				party.leaders.add(player.getName());
 				party.activePlayers.add(player);
@@ -576,11 +629,11 @@ public class ChatPartyPlugin extends JavaPlugin
 				savePlayer(player);
 				saveParty(party);
 				
-				sendMessage(player, "You created the party \"" + party.name + "\".");
-				sendMessage(player, "Invite your friends with /party invite <player>");
-				sendMessage(player, "Send a message to your party with /p <message>");
+				sendMessage(player, "You created the "+TEXT_PARTY+" \"" + party.name + "\".");
+				sendMessage(player, "Invite your friends with /"+TEXT_PARTY+" invite <player>");
+				sendMessage(player, "Send a message to your "+TEXT_PARTY+" with /"+TEXT_P+" <message>");
 				
-				this.getLogger().info("Created the chat party \"" + party.name + "\".");
+				this.getLogger().info("Created the chat "+TEXT_PARTY+" \"" + party.name + "\".");
 				
 				return true;
 			}
@@ -596,20 +649,20 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
 				if(!player.hasMetadata("isPartyLeader")) 
 				{
-					sendMessage(player, "Only party leaders can promote other players.");
+					sendMessage(player, "Only "+TEXT_PARTY+" leaders can promote other players.");
 					return true;
 				}
 				
 				if(args.length != 2) 
 				{
-					sendMessage(player, "Usage: /party leader <player>");
+					sendMessage(player, "Usage: /"+TEXT_PARTY+" leader <player>");
 					return true;
 				}
 				
@@ -627,7 +680,7 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!party.members.contains(promotedPlayer.getName()))
 				{
-					sendMessage(player, "The player is not a member of your party.");
+					sendMessage(player, "The player is not a member of your "+TEXT_PARTY+".");
 					return true;
 				}
 				
@@ -645,8 +698,8 @@ public class ChatPartyPlugin extends JavaPlugin
 				}
 				saveParty(party);
 				
-				party.sendPartyMessage(promotedPlayer.getName() + ChatColor.GREEN + " is now a leader of the party.");
-				sendSpyPartyMessage(party, promotedPlayer.getName() + " is now a leader of the party.");
+				party.sendPartyMessage(promotedPlayer.getName() + ChatColor.GREEN + " is now a leader of the "+TEXT_PARTY+".");
+				sendSpyPartyMessage(party, promotedPlayer.getName() + " is now a leader of the "+TEXT_PARTY+".");
 				
 				return true;
 			}
@@ -662,20 +715,20 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
 				if(!player.hasMetadata("isPartyLeader")) 
 				{
-					sendMessage(player, "Only party leaders can kick other players.");
+					sendMessage(player, "Only "+TEXT_PARTY+" leaders can kick other players.");
 					return true;
 				}
 				
 				if(args.length != 2) 
 				{
-					sendMessage(player, "Usage: /party kick <player>");
+					sendMessage(player, "Usage: /"+TEXT_PARTY+" kick <player>");
 					return true;
 				}
 				
@@ -688,13 +741,13 @@ public class ChatPartyPlugin extends JavaPlugin
 			
 				if(party.leaders.contains(kickedPlayer.getName())) 
 				{
-					sendMessage(player, "You can't kick party leaders.");
+					sendMessage(player, "You can't kick "+TEXT_PARTY+" leaders.");
 					return true;
 				}
 				
 				if(!party.members.contains(kickedPlayer.getName()))
 				{
-					sendMessage(player, "The player is not a member of your party.");
+					sendMessage(player, "The player is not a member of your "+TEXT_PARTY+".");
 					return true;
 				}
 				
@@ -707,14 +760,14 @@ public class ChatPartyPlugin extends JavaPlugin
 				{
 					onlinePlayer.removeMetadata("party", this);
 					party.activePlayers.remove(onlinePlayer);
-					sendMessage(onlinePlayer, "You were kicked from the party \"" + party.name + "\".");
+					sendMessage(onlinePlayer, "You were kicked from the "+TEXT_PARTY+" \"" + party.name + "\".");
 				}
 				
 				removePlayer(kickedPlayer.getName());
 				saveParty(party);
 				
-				party.sendPartyMessage(kickedPlayer.getName() + " was kicked from the party.");
-				sendSpyPartyMessage(party, kickedPlayer.getName() + " was kicked from the party.");
+				party.sendPartyMessage(kickedPlayer.getName() + " was kicked from the "+TEXT_PARTY+".");
+				sendSpyPartyMessage(party, kickedPlayer.getName() + " was kicked from the "+TEXT_PARTY+".");
 
 				return true;
 			}
@@ -730,8 +783,8 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a"+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
@@ -764,7 +817,7 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				String members = builder.toString();
 				
-				sendMessage(player, "Member List of the Party \"" + party.name + "\":");
+				sendMessage(player, "Member List of the "+TEXT_PARTY+" \"" + party.name + "\":");
 				sendMessage(player, "Leaders (" + party.leaders.size() + "): " +  leaders);
 				sendMessage(player, "Members (" + party.members.size() + "): " +  members);
 				
@@ -807,22 +860,22 @@ public class ChatPartyPlugin extends JavaPlugin
 				
 				if(!player.hasMetadata("party")) 
 				{
-					sendMessage(player, "You are not in a party.");
-					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own party with /party create <name>.");
+					sendMessage(player, "You are not in a "+TEXT_PARTY+".");
+					if(player.hasPermission("chatparty.leader")) sendMessage(player, "Create your own "+TEXT_PARTY+" with /"+TEXT_PARTY+" create <name>.");
 					return true;
 				}
 				
 				//CONDITIONS END
 				
-				boolean enabled = toggleChat(player);
+				boolean enabled = togglePartyChat(player);
 				
 				if(enabled) 
 				{
-					sendMessage(player, "Toggled Party Chat.");
+					sendMessage(player, "Toggled "+TEXT_PARTY+" chat.");
 				}
 				else
 				{
-					sendMessage(player, "Detoggled Party Chat.");
+					sendMessage(player, "Detoggled "+TEXT_PARTY+" chat.");
 				}
 				
 				return true;

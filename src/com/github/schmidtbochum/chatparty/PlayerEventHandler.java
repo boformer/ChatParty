@@ -19,6 +19,8 @@
  */
 package com.github.schmidtbochum.chatparty;
 
+import java.util.Set;
+
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -105,6 +107,24 @@ public class PlayerEventHandler implements Listener
 			plugin.sendSpyChatMessage(party, player, message);
 			
 			event.setCancelled(true);
+		}
+		else if(player.hasMetadata("globalChatToggle"))
+		{
+			plugin.sendMessage(player, "Message cancelled. Type /chat to enable the global chat.");
+			
+			event.setCancelled(true);
+		}
+		else
+		{
+			Set<Player> recipients = event.getRecipients();
+			
+			for(Player recipient : recipients)
+			{
+				if(recipient.hasMetadata("globalChatToggle"))
+				{
+					recipients.remove(recipient);
+				}
+			}
 		}
 	}
 }

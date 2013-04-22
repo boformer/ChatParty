@@ -26,6 +26,8 @@ import org.bukkit.entity.Player;
 
 public class Party
 {
+	private ChatPartyPlugin plugin;
+	
 	public String name;
 	public String shortName;
 	public ArrayList<String> members;
@@ -33,8 +35,10 @@ public class Party
 	
 	public ArrayList<Player> activePlayers;
 	
-	public Party(String name)
+	public Party(String name, ChatPartyPlugin plugin)
 	{
+		this.plugin = plugin;
+		
 		this.name = name;
 		this.shortName = name.substring(0, 3);
 		
@@ -49,7 +53,9 @@ public class Party
 		{
 			if(player.hasPermission("chatparty.user")) 
 			{
-				player.sendMessage(ChatColor.GREEN + "[P] " + ChatColor.WHITE + sender.getDisplayName() + ChatColor.WHITE + ": " + message);
+				String formattedMessage = plugin.config_chatFormat.replace("{DISPLAYNAME}", sender.getDisplayName()).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
+				
+				player.sendMessage(formattedMessage);
 			}
 		}
 	}
@@ -59,7 +65,7 @@ public class Party
 		{
 			if(player.hasPermission("chatparty.user")) 
 			{
-				player.sendMessage(ChatColor.GREEN + "[Party] " + message);
+				player.sendMessage(plugin.config_messageColor + "["+plugin.TEXT_PARTY+"] " + message);
 			}
 		}
 	}
