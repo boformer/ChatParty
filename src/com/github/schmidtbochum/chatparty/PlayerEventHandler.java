@@ -118,11 +118,15 @@ public class PlayerEventHandler implements Listener
 		{
 			Set<Player> recipients = event.getRecipients();
 			
-			for(Player recipient : recipients)
-			{
-				if(recipient.hasMetadata("globalChatToggle"))
-				{
-					recipients.remove(recipient);
+			/* Set iterator */
+			Iterator<Player> recipientIterator = recipients.iterator();
+			Player playerInstance = null;
+			
+			while(recipientIterator.hasNext()) {
+				playerInstance = recipientIterator.next();
+				if (playerInstance.hasMetadata("globalChatToggle")) {
+					/* Remove an objet from a set with the iterator */
+					recipientIterator.remove();
 				}
 			}
 		}
