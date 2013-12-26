@@ -74,6 +74,11 @@ public class PartyCommand extends BaseCommandExecutor {
             return true;
         }
 
+        if (args.length == 1 && args[0].equalsIgnoreCase("toggle")) {
+            toggleSubcommand(player);
+            return true;
+        }
+        
         if (args.length == 2 && args[0].equalsIgnoreCase("invite")) {
             inviteSubcommand(player, args[1]);
             return true;
@@ -90,7 +95,7 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         if (args.length == 2 && args[0].equalsIgnoreCase("kick")) {
-            leaderSubcommand(player, args[1]);
+            kickSubcommand(player, args[1]);
             return true;
         }
 
@@ -244,6 +249,15 @@ public class PartyCommand extends BaseCommandExecutor {
             plugin.sendMessage(player, "You are already in a party.");
             return;
         }
+        
+        if (partyName.length() > 15) {
+            plugin.sendMessage(player, "This name is too long! (3-15 letters)");
+            return;
+        }
+        if (partyName.length() < 3) {
+            plugin.sendMessage(player, "This name is too short! (3-15 letters)");
+            return;
+        }
 
         if (plugin.loadParty(partyName) != null) {
             plugin.sendMessage(player, "The party \"" + partyName + "\" already exists. Please choose a different name.");
@@ -308,7 +322,7 @@ public class PartyCommand extends BaseCommandExecutor {
         plugin.sendSpyPartyMessage(party, promotedPlayer.getName() + " is now a leader of the party.");
     }
 
-    private void kickPlayer(Player player, String playerName) {
+    private void kickSubcommand(Player player, String playerName) {
         if (!player.hasPermission("chatparty.leader")) {
             plugin.sendMessage(player, "You do not have access to that command.");
             return;
