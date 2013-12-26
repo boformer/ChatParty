@@ -119,9 +119,12 @@ public class Party {
     public void removePlayer(Player player, boolean kicked) {
         player.removeMetadata("party", plugin);
         player.removeMetadata("isPartyLeader", plugin);
-        leaders.remove(player.getName());
-        members.remove(player.getName());
-        activePlayers.remove(player);
+        
+        if (!disbanding) {
+            leaders.remove(player.getName());
+            members.remove(player.getName());
+            activePlayers.remove(player);
+        }
 
         if (kicked) {
             sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " was kicked from the party.");
@@ -181,6 +184,7 @@ public class Party {
         }
         
         disbanding = true;
+                
         for (String playerName : members) {
             removePlayer(playerName);
         }
