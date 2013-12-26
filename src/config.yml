@@ -3,8 +3,10 @@
 # toggleWithP: Toggle the party chat when /p without arguments is entered (not newbie-friendly)
 # messageColor: Color of the plugin messages
 # chatFormat: Format of the party chat messages. Placeholders: {PARTYNAME}, {DISPLAYNAME}, {MESSAGE}
-messageColor: '&b'
-chatFormat: '&a[P] &f{DISPLAYNAME}&f: {MESSAGE}'
+messageColor: '&a'
+adminMessageColor: '&b'
+chatFormat: '&b[P] &f{DISPLAYNAME}&b: {MESSAGE}'
+adminChatFormat: '&b[A] &f{DISPLAYNAME}&a: {MESSAGE}'
 invertP: false
 toggleWithP: false
 players: {}
