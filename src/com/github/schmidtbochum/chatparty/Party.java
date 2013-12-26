@@ -60,7 +60,7 @@ public class Party {
     public void sendPlayerMessage(Player sender, String message) {
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
-                String formattedMessage = plugin.config_chatFormat.replace("{DISPLAYNAME}", sender.getDisplayName()).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
+                String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", sender.getDisplayName()).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
 
                 player.sendMessage(formattedMessage);
             }

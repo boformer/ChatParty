@@ -16,6 +16,9 @@ commands:
     description: Toggle the global chat.
     permission: chatparty.user
     usage: "Command Help: /party help"
+  a:
+    decription: Toggle the admin chat.
+    permission: chatparty.adminchat
 permissions:
     chatparty.user:
         description: Enter parties and chat
@@ -30,5 +33,6 @@ permissions:
         default: op
         children:
         - chatparty.leader
-        
-        
+    chatparty.adminchat:
+        description: Ability to use admin chat
+        default: op

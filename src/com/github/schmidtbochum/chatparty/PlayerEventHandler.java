@@ -101,7 +101,11 @@ public class PlayerEventHandler implements Listener {
             return;
         }
 
-        if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
+        if (player.hasMetadata("adminToggle")) {
+            plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
+            event.setCancelled(true);
+        }
+        else if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
             String message = event.getMessage();
 
             String partyName = player.getMetadata("party").get(0).asString();
@@ -120,12 +124,10 @@ public class PlayerEventHandler implements Listener {
 
             /* Set iterator */
             Iterator<Player> recipientIterator = recipients.iterator();
-            Player playerInstance = null;
 
             while (recipientIterator.hasNext()) {
-                playerInstance = recipientIterator.next();
-                if (playerInstance.hasMetadata("globalChatToggle")) {
-                    /* Remove an objet from a set with the iterator */
+                if (recipientIterator.next().hasMetadata("globalChatToggle")) {
+                    // Remove an object from a set with the iterator
                     recipientIterator.remove();
                 }
             }
