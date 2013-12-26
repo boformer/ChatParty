@@ -39,6 +39,8 @@ public class Party {
 
     private final ChatPartyPlugin plugin;
 
+    private boolean disbanding = false;
+    
     public String name;
     public String shortName;
     public ArrayList<String> members;
@@ -174,6 +176,11 @@ public class Party {
      * Disbands the party.
      */
     public void disband() {
+        if (disbanding) {
+            return;
+        }
+        
+        disbanding = true;
         for (String playerName : members) {
             removePlayer(playerName);
         }

@@ -252,7 +252,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      */
     public void sendSpyPartyMessage(Party party, String message) {
         for (Player player : spyPlayers) {
-            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || party.name.equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
+            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || !party.name.equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
                 player.sendMessage(ChatColor.GRAY + "[" + party.shortName + "] " + message);
             }
         }
