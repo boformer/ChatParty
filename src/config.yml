@@ -5,8 +5,8 @@
 # chatFormat: Format of the party chat messages. Placeholders: {PARTYNAME}, {DISPLAYNAME}, {MESSAGE}
 messageColor: '&a'
 adminMessageColor: '&b'
-partyChatFormat: '&b[P] &f{DISPLAYNAME}&b: {MESSAGE}'
-adminChatFormat: '&b[A] &f{DISPLAYNAME}&a: {MESSAGE}'
+partyChatFormat: '&a[P] &f{DISPLAYNAME}&a: {MESSAGE}'
+adminChatFormat: '&b[A] &f{DISPLAYNAME}&b: {MESSAGE}'
 invertP: false
 toggleWithP: false
 players: {}
