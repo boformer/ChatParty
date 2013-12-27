@@ -20,6 +20,7 @@
  */
 package com.github.schmidtbochum.chatparty;
 
+import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -64,9 +65,9 @@ public class PlayerEventHandler implements Listener {
             return;
         }
 
-        player.setMetadata("party", new FixedMetadataValue(plugin, party.name));
+        player.setMetadata("party", new FixedMetadataValue(plugin, party.getName()));
 
-        if (party.leaders.contains(player.getName())) {
+        if (party.getMembers().get(MemberType.LEADER).contains(player.getName())) {
             player.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
         } else {
             player.removeMetadata("isPartyLeader", plugin);

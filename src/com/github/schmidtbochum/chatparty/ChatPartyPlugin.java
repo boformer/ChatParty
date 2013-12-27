@@ -20,6 +20,7 @@
  */
 package com.github.schmidtbochum.chatparty;
 
+import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -43,14 +44,8 @@ public class ChatPartyPlugin extends JavaPlugin {
     private boolean config_invertP;
     private boolean config_toggleWithP;
     private AdminChat adminChat;
-
-    public ChatColor config_messageColor;
-    public final boolean GUILD_MODE = false;
-    public final String TEXT_PARTY = (GUILD_MODE ? "guild" : "party");
-    public final String TEXT_PARTY2 = (GUILD_MODE ? "Guild" : "Party");
-    public final String TEXT_PARTIES = (GUILD_MODE ? "guilds" : "parties");
-    public final String TEXT_P = (GUILD_MODE ? "g" : "p");
-
+    private ChatColor config_messageColor;
+    
     /**
      * Runs when the plugin is being enabled on the server.
      */
@@ -112,6 +107,17 @@ public class ChatPartyPlugin extends JavaPlugin {
     }
     
     /**
+     * Gets the ChatColor to use with messages.
+     * 
+     * @return The ChatColor.
+     * 
+     * @see ChatColor
+     */
+    public ChatColor getMessageColour() {
+        return config_messageColor;
+    }
+    
+    /**
      * Gets the admin chat class.
      * 
      * @return The class.
@@ -126,9 +132,9 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param party The party to save the data for.
      */
     public void saveParty(Party party) {
-        ConfigurationSection partySection = getConfig().getConfigurationSection("parties").createSection(party.name);
-        partySection.set("leaders", party.leaders);
-        partySection.set("members", party.members);
+        ConfigurationSection partySection = getConfig().getConfigurationSection("parties").createSection(party.getName());
+        partySection.set("leaders", party.getMembers().get(MemberType.LEADER));
+        partySection.set("members", party.getMembers().get(MemberType.MEMBER));
         saveConfig();
         reloadConfig();
     }
@@ -252,11 +258,11 @@ public class ChatPartyPlugin extends JavaPlugin {
      */
     public void sendSpyPartyMessage(Party party, String message) {
         for (Player player : spyPlayers) {
-            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || !party.name.equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
-                player.sendMessage(ChatColor.GRAY + "[" + party.shortName + "] " + message);
+            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || !party.getName().equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
+                player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
             }
         }
-        getLogger().info("[" + party.shortName + "] " + message);
+        getLogger().info("[" + party.getShortName() + "] " + message);
     }
 
     /**
@@ -284,22 +290,7 @@ public class ChatPartyPlugin extends JavaPlugin {
         Party party = activeParties.get(name);
 
         if (party == null) {
-            party = new Party(name, this);
-
-            ConfigurationSection partySection = getConfig().getConfigurationSection("parties." + name);
-
-            if (partySection == null || partySection.getStringList("leaders").isEmpty()) {
-                return null;
-            }
-
-            party.leaders = (ArrayList<String>) partySection.getStringList("leaders");
-            party.members = (ArrayList<String>) partySection.getStringList("members");
-
-            for (Player player : getServer().getOnlinePlayers()) {
-                if (party.leaders.contains(player.getName()) || party.members.contains(player.getName())) {
-                    party.activePlayers.add(player);
-                }
-            }
+            party = Party.loadParty(name, this);
         }
 
         return party;
@@ -311,7 +302,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param party The party to remove.
      */
     void removeActiveParty(Party party) {
-        activeParties.remove(party.name);
+        activeParties.remove(party.getName());
     }
 
     /**

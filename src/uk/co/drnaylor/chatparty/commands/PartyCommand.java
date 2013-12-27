@@ -226,11 +226,11 @@ public class PartyCommand extends BaseCommandExecutor {
         String partyName = player.getMetadata("party").get(0).asString();
         Party party = plugin.loadParty(partyName);
 
-        invitedPlayer.setMetadata("partyInvitation", new FixedMetadataValue(plugin, party.name));
+        invitedPlayer.setMetadata("partyInvitation", new FixedMetadataValue(plugin, party.getName()));
 
         plugin.sendMessage(player, "You invited " + invitedPlayer.getName() + " to your party.");
 
-        plugin.sendMessage(invitedPlayer, player.getName() + " invited you to the party \"" + party.name + "\".");
+        plugin.sendMessage(invitedPlayer, player.getName() + " invited you to the party \"" + party.getName() + "\".");
         plugin.sendMessage(invitedPlayer, "To accept the invitation, type /party join");
     }
 
@@ -298,12 +298,14 @@ public class PartyCommand extends BaseCommandExecutor {
         String partyName = player.getMetadata("party").get(0).asString();
         Party party = plugin.loadParty(partyName);
 
-        if (party.leaders.contains(promotedPlayer.getName())) {
+        Map<MemberType, List<String>> members = party.getMembers();
+        
+        if (members.get(MemberType.LEADER).contains(promotedPlayer.getName())) {
             plugin.sendMessage(player, "The player is already a leader.");
             return;
         }
 
-        if (!party.members.contains(promotedPlayer.getName())) {
+        if (!members.get(MemberType.MEMBER).contains(promotedPlayer.getName())) {
             plugin.sendMessage(player, "The player is not a member of your party.");
             return;
         }
@@ -373,10 +375,10 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         String members = builder.toString();
-
-        plugin.sendMessage(player, "Member List of the party \"" + party.name + "\":");
-        plugin.sendMessage(player, "Leaders (" + party.leaders.size() + "): " + leaders);
-        plugin.sendMessage(player, "Members (" + party.members.size() + "): " + members);
+        
+        plugin.sendMessage(player, "Member List of the party \"" + party.getName() + "\":");
+        plugin.sendMessage(player, "Leaders (" + mems.get(MemberType.LEADER).size() + "): " + leaders);
+        plugin.sendMessage(player, "Members (" + mems.get(MemberType.MEMBER).size() + "): " + members);
     }
 
     private void toggleSubcommand(Player player) {

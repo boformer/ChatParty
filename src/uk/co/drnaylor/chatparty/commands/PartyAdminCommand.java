@@ -102,7 +102,7 @@ public class PartyAdminCommand extends BaseCommandExecutor {
         // Green for online, Grey for offline
         for (Party p : parties.values()) {
             StringBuilder sb = new StringBuilder();
-            sb.append(p.name).append(": ");
+            sb.append(p.getName()).append(": ");
 
             Map<MemberType, List<String>> pls = p.getMembers();
 
@@ -169,7 +169,7 @@ public class PartyAdminCommand extends BaseCommandExecutor {
         
         if (player != null) {
             Party party = plugin.getPlayerParty(player);
-            if (party.name.equalsIgnoreCase(partyName)) {
+            if (party.getName().equalsIgnoreCase(partyName)) {
                 party.removePlayer(player, true);
             }
             

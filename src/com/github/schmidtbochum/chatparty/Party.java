@@ -30,21 +30,22 @@ import java.util.regex.Pattern;
 
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 
 public class Party {
 
-    public static Pattern ALPHANUMERIC = Pattern.compile("[A-Za-z0-9 ]+");
+    public final static Pattern ALPHANUMERIC = Pattern.compile("[A-Za-z0-9 ]+");
 
     private final ChatPartyPlugin plugin;
 
     private boolean disbanding = false;
-    
-    public String name;
-    public String shortName;
-    public ArrayList<String> members;
-    public ArrayList<String> leaders;
+
+    private final String name;
+    private final String shortName;
+    private ArrayList<String> members;
+    private ArrayList<String> leaders;
 
     public ArrayList<Player> activePlayers;
 
@@ -59,11 +60,19 @@ public class Party {
         activePlayers = new ArrayList<Player>();
     }
 
+    public String getName() {
+        return name;
+    }
+    
+    public String getShortName() {
+        return shortName;
+    }
+    
     public void sendPlayerMessage(Player sender, String message) {
         sendPlayerMessage(sender.getDisplayName(), message);
     }
-    
-   public void sendPlayerMessage(String sender, String message) {
+
+    public void sendPlayerMessage(String sender, String message) {
         String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", sender).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
@@ -73,7 +82,7 @@ public class Party {
     }
 
     public void sendPartyMessage(String message) {
-        String msg = String.format("%s[Party] %s", plugin.config_messageColor, message);
+        String msg = String.format("%s[Party] %s", plugin.getMessageColour(), message);
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
                 player.sendMessage(msg);
@@ -123,7 +132,7 @@ public class Party {
     public void removePlayer(Player player, boolean kicked) {
         player.removeMetadata("party", plugin);
         player.removeMetadata("isPartyLeader", plugin);
-        
+
         if (!disbanding) {
             leaders.remove(player.getName());
             members.remove(player.getName());
@@ -152,7 +161,7 @@ public class Party {
 
     /**
      * Kicks a player, based on the leaderPlayer.
-     * 
+     *
      * @param leaderPlayer The player that is doing the kicking.
      * @param player The player that is being kicked.
      */
@@ -161,7 +170,7 @@ public class Party {
             plugin.sendMessage(leaderPlayer, "Only party leaders can kick other players.");
             return;
         }
-        
+
         if (leaders.contains(player.getName())) {
             plugin.sendMessage(leaderPlayer, "You can't kick party leaders.");
             return;
@@ -186,9 +195,9 @@ public class Party {
         if (disbanding) {
             return;
         }
-        
+
         disbanding = true;
-                
+
         for (String playerName : members) {
             removePlayer(playerName);
         }
@@ -205,27 +214,27 @@ public class Party {
 
         plugin.getLogger().log(Level.INFO, "Disbanded the chat party \"{0}\".", name);
     }
-    
+
     public Map<MemberType, List<String>> getMembers() {
         Map<MemberType, List<String>> ret = new HashMap<MemberType, List<String>>();
-        
+
         ret.put(MemberType.MEMBER, members);
         ret.put(MemberType.LEADER, leaders);
         return ret;
     }
-    
+
     /**
      * Sets a player as the leader of the party.
-     * 
+     *
      * @param promotedPlayer The player to set as a party leader.
      * @return <code>true</code> if the player was promoted, <code>false</code>
-     *         if the user was not part of the party in the first place.
+     * if the user was not part of the party in the first place.
      */
     public boolean addLeader(OfflinePlayer promotedPlayer) {
         if (!members.remove(promotedPlayer.getName())) {
             return false;
         }
-        
+
         leaders.add(promotedPlayer.getName());
 
         Player onlinePlayer = promotedPlayer.getPlayer();
@@ -285,6 +294,27 @@ public class Party {
         return party;
     }
 
+    public static Party loadParty(String partyName, ChatPartyPlugin pluginInstance) {
+        Party party = new Party(partyName, pluginInstance);
+
+        ConfigurationSection partySection = pluginInstance.getConfig().getConfigurationSection("parties." + partyName);
+
+        if (partySection == null || partySection.getStringList("leaders").isEmpty()) {
+            return null;
+        }
+
+        party.leaders = (ArrayList<String>) partySection.getStringList("leaders");
+        party.members = (ArrayList<String>) partySection.getStringList("members");
+
+        for (Player player : pluginInstance.getServer().getOnlinePlayers()) {
+            if (party.leaders.contains(player.getName()) || party.members.contains(player.getName())) {
+                party.activePlayers.add(player);
+            }
+        }
+
+        return party;
+    }
+
     /**
      * Validates a party name.
      *
@@ -295,8 +325,9 @@ public class Party {
         Matcher m = ALPHANUMERIC.matcher(name);
         return m.matches();
     }
-    
+
     public enum MemberType {
+
         LEADER,
         MEMBER
     }
