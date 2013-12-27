@@ -288,7 +288,7 @@ public class ChatPartyPlugin extends JavaPlugin {
 
             ConfigurationSection partySection = getConfig().getConfigurationSection("parties." + name);
 
-            if (partySection == null || partySection.getStringList("leaders").size() == 0) {
+            if (partySection == null || partySection.getStringList("leaders").isEmpty()) {
                 return null;
             }
 

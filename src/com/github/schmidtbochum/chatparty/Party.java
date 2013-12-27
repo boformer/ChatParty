@@ -60,19 +60,23 @@ public class Party {
     }
 
     public void sendPlayerMessage(Player sender, String message) {
+        sendPlayerMessage(sender.getDisplayName(), message);
+    }
+    
+   public void sendPlayerMessage(String sender, String message) {
+        String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", sender).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
-                String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", sender.getDisplayName()).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
-
                 player.sendMessage(formattedMessage);
             }
         }
     }
 
     public void sendPartyMessage(String message) {
+        String msg = String.format("%s[Party] %s", plugin.config_messageColor, message);
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
-                player.sendMessage(plugin.config_messageColor + "[" + plugin.TEXT_PARTY + "] " + message);
+                player.sendMessage(msg);
             }
         }
     }
@@ -202,12 +206,38 @@ public class Party {
         plugin.getLogger().log(Level.INFO, "Disbanded the chat party \"{0}\".", name);
     }
     
-    public Map<String, List<String>> getMembers() {
-        Map<String, List<String>> ret = new HashMap<String, List<String>>();
+    public Map<MemberType, List<String>> getMembers() {
+        Map<MemberType, List<String>> ret = new HashMap<MemberType, List<String>>();
         
-        ret.put("members", members);
-        ret.put("leaders", leaders);
+        ret.put(MemberType.MEMBER, members);
+        ret.put(MemberType.LEADER, leaders);
         return ret;
+    }
+    
+    /**
+     * Sets a player as the leader of the party.
+     * 
+     * @param promotedPlayer The player to set as a party leader.
+     * @return <code>true</code> if the player was promoted, <code>false</code>
+     *         if the user was not part of the party in the first place.
+     */
+    public boolean addLeader(OfflinePlayer promotedPlayer) {
+        if (!members.remove(promotedPlayer.getName())) {
+            return false;
+        }
+        
+        leaders.add(promotedPlayer.getName());
+
+        Player onlinePlayer = promotedPlayer.getPlayer();
+
+        if (onlinePlayer != null && onlinePlayer.isOnline()) {
+            onlinePlayer.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
+        }
+        plugin.saveParty(this);
+
+        sendPartyMessage(promotedPlayer.getName() + ChatColor.GREEN + " is now a leader of the party.");
+        plugin.sendSpyPartyMessage(this, promotedPlayer.getName() + " is now a leader of the party.");
+        return true;
     }
 
     /**
@@ -264,5 +294,10 @@ public class Party {
     private static boolean validateName(String name) {
         Matcher m = ALPHANUMERIC.matcher(name);
         return m.matches();
+    }
+    
+    public enum MemberType {
+        LEADER,
+        MEMBER
     }
 }

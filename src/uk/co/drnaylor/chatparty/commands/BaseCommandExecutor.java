@@ -51,4 +51,18 @@ public abstract class BaseCommandExecutor implements CommandExecutor {
         return null;
     }
     
+    /**
+     * Sends a formatted message to the player, or a message to the console.
+     * 
+     * @param cs The sender of the command.
+     * @param message The message to send.
+     */
+    protected void sendMessage(CommandSender cs, String message) {
+        Player player = getPlayerFromSender(cs);
+        if (player == null) {
+            cs.sendMessage(message);
+        } else {
+            plugin.sendMessage(player, message);
+        }
+    }
 }

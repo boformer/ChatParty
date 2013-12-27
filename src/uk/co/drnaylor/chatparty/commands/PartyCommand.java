@@ -23,6 +23,7 @@ package uk.co.drnaylor.chatparty.commands;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
 import com.github.schmidtbochum.chatparty.Party;
+import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.List;
 import java.util.Map;
 import org.bukkit.ChatColor;
@@ -303,23 +304,12 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         if (!party.members.contains(promotedPlayer.getName())) {
-            plugin.sendMessage(player, "The player is not a member of your plugin.");
+            plugin.sendMessage(player, "The player is not a member of your party.");
             return;
         }
 
         //CONDITIONS END
-        party.members.remove(promotedPlayer.getName());
-        party.leaders.add(promotedPlayer.getName());
-
-        Player onlinePlayer = promotedPlayer.getPlayer();
-
-        if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            onlinePlayer.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
-        }
-        plugin.saveParty(party);
-
-        party.sendPartyMessage(promotedPlayer.getName() + ChatColor.GREEN + " is now a leader of the party.");
-        plugin.sendSpyPartyMessage(party, promotedPlayer.getName() + " is now a leader of the party.");
+        party.addLeader(promotedPlayer);
     }
 
     private void kickSubcommand(Player player, String playerName) {
@@ -360,12 +350,12 @@ public class PartyCommand extends BaseCommandExecutor {
         String partyName = player.getMetadata("party").get(0).asString();
         Party party = plugin.loadParty(partyName);
 
-        Map<String, List<String>> mems = party.getMembers();
+        Map<MemberType, List<String>> mems = party.getMembers();
 
         String sep = ", ";
 
         StringBuilder builder = new StringBuilder();
-        for (String name : mems.get("leaders")) {
+        for (String name : mems.get(MemberType.LEADER)) {
             if (builder.length() > 0) {
                 builder.append(sep);
             }
@@ -375,7 +365,7 @@ public class PartyCommand extends BaseCommandExecutor {
         String leaders = builder.toString();
 
         builder = new StringBuilder();
-        for (String name : mems.get("members")) {
+        for (String name : mems.get(MemberType.MEMBER)) {
             if (builder.length() > 0) {
                 builder.append(sep);
             }
