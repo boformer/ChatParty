@@ -19,6 +19,14 @@ commands:
   a:
     decription: Toggle the admin chat.
     permission: chatparty.adminchat
+  partyadmin:
+    decription: Party admin commands.
+    permission: chatparty.admin
+    aliases: [pa]
+  partyadminchat:
+    decription: Party admin chat.
+    permission: chatparty.admin
+    aliases: [pc, pac]
 permissions:
     chatparty.user:
         description: Enter parties and chat

@@ -35,6 +35,8 @@ import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
 import uk.co.drnaylor.chatparty.commands.PCommand;
+import uk.co.drnaylor.chatparty.commands.PartyAdminChatCommand;
+import uk.co.drnaylor.chatparty.commands.PartyAdminCommand;
 import uk.co.drnaylor.chatparty.commands.PartyCommand;
 
 public class ChatPartyPlugin extends JavaPlugin {
@@ -78,6 +80,8 @@ public class ChatPartyPlugin extends JavaPlugin {
         getCommand("chat").setExecutor(new ChatCommand(this));
         getCommand("party").setExecutor(new PartyCommand(this));
         getCommand("a").setExecutor(new ACommand(this));
+        getCommand("partyadmin").setExecutor(new PartyAdminCommand(this));
+        getCommand("partyadminchat").setExecutor(new PartyAdminChatCommand(this));
     }
 
     /**
