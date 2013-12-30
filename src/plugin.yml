@@ -1,6 +1,8 @@
 name: ChatParty
 main: com.github.schmidtbochum.chatparty.ChatPartyPlugin
-version: 0.4.0-SNAPSHOT
+version: 0.5.0-SNAPSHOT
+author: schmidtbochum
+authors: [dualspiral, JammyBand] # sneaky
 description: >
              Party Chat Plugin
 commands:
@@ -27,6 +29,14 @@ commands:
     decription: Party admin chat.
     permission: chatparty.admin
     aliases: [pc, pac]
+  nsfwlisten:
+    description: Toggle the NSFW chat
+    aliases: [nsfwtog, ntog]
+    permission: chatparty.nsfw
+  nsfw:
+    description: Send an NSFW chat message
+    aliases: [nsfwch, ncha]
+    permission: chatparty.nsfw
 permissions:
     chatparty.user:
         description: Enter parties and chat

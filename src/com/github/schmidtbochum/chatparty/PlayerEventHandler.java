@@ -101,7 +101,12 @@ public class PlayerEventHandler implements Listener {
             player.removeMetadata("ignore", plugin);
             return;
         }
-
+        
+        if (player.hasMetadata("nsfwToggle")) {
+        	plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
+        	event.setCancelled(true);
+        }
+        
         if (player.hasMetadata("adminToggle")) {
             plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
             event.setCancelled(true);

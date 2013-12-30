@@ -21,6 +21,7 @@
 package com.github.schmidtbochum.chatparty;
 
 import com.github.schmidtbochum.chatparty.Party.MemberType;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,9 +32,13 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import supercheese200.NSFWChat.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
+import uk.co.drnaylor.chatparty.commands.NSFWCommand;
+import uk.co.drnaylor.chatparty.commands.NSFWListenCommand;
 import uk.co.drnaylor.chatparty.commands.PCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminChatCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminCommand;
@@ -47,6 +52,7 @@ public class ChatPartyPlugin extends JavaPlugin {
     private boolean config_toggleWithP;
     private AdminChat adminChat;
     private ChatColor config_messageColor;
+    private NSFWChat nsfwChat;
     
     /**
      * Runs when the plugin is being enabled on the server.
@@ -72,7 +78,7 @@ public class ChatPartyPlugin extends JavaPlugin {
         }
         
         adminChat = new AdminChat(this);
-
+        nsfwChat = new NSFWChat(this);
         getServer().getPluginManager().registerEvents(new PlayerEventHandler(this), this);
 
         // Time to register some commands!
@@ -82,6 +88,8 @@ public class ChatPartyPlugin extends JavaPlugin {
         getCommand("a").setExecutor(new ACommand(this));
         getCommand("partyadmin").setExecutor(new PartyAdminCommand(this));
         getCommand("partyadminchat").setExecutor(new PartyAdminChatCommand(this));
+        getCommand("nsfw").setExecutor(new NSFWCommand(this));
+        getCommand("nsfwlisten").setExecutor(new NSFWListenCommand(this));
     }
 
     /**
@@ -111,6 +119,15 @@ public class ChatPartyPlugin extends JavaPlugin {
     }
     
     /**
+     * Gets the NSFW chat template from the config file.
+     * 
+     * @return A string representation of the template
+     */
+    public String getNSFWChatTemplate() {
+    	return ChatColor.translateAlternateColorCodes('&', getConfig().getString("NSFWChatFormat"));
+    }
+    
+    /**
      * Gets the ChatColor to use with messages.
      * 
      * @return The ChatColor.
@@ -128,6 +145,14 @@ public class ChatPartyPlugin extends JavaPlugin {
      */
     public AdminChat getAdminChat() {
         return adminChat;
+    }
+    
+    /**
+     * Gets the NSFW chat class
+     * @return The NSFW chat class
+     */
+    public NSFWChat getNSFWChat() {
+    	return nsfwChat;
     }
     
     /**
@@ -215,6 +240,7 @@ public class ChatPartyPlugin extends JavaPlugin {
         } else {
             player.setMetadata("partyToggle", new FixedMetadataValue(this, true));
             player.removeMetadata("adminToggle", this);
+            player.removeMetadata("nsfwToggle", this);
             return true;
         }
     }
@@ -232,10 +258,30 @@ public class ChatPartyPlugin extends JavaPlugin {
         } else {
             player.setMetadata("adminToggle", new FixedMetadataValue(this, true));
             player.removeMetadata("partyToggle", this);
+            player.removeMetadata("nsfwToggle", this);
             return true;
         }
     }
-
+    public boolean toggleNSFWChat(Player player) {
+    	if (player.hasMetadata("nsfwToggle")) {
+    		player.removeMetadata("nsfwToggle", this);
+    		return false;
+    	} else {
+    		player.setMetadata("nsfwToggle", new FixedMetadataValue(this, true));
+    		player.removeMetadata("adminToggle", this);
+    		player.removeMetadata("partyToggle", this);
+    		return true;
+    	}
+    }
+    public boolean toggleNSFWListening(Player pla) {
+    	if (!pla.hasMetadata("nsfwlistening")) {
+			pla.setMetadata("nsfwlistening", new FixedMetadataValue(this, true));
+			return true;
+		} else {
+			pla.removeMetadata("nsfwlistening", this);
+			return false;
+		}
+    }
     /**
      * Toggles a user's global chat status.
      * 
@@ -346,7 +392,7 @@ public class ChatPartyPlugin extends JavaPlugin {
     public void sendMessage(Player player, String message) {
         player.sendMessage(config_messageColor + message);
     }
-
+    
     /**
      * Gets whether to toggle with p.
      *
