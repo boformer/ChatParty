@@ -71,7 +71,7 @@ public class ACommand extends BaseCommandExecutor {
     private void directToAdminChat(Player player, String[] args) {
         StringBuilder s = new StringBuilder();
         for (String st : args) {
-            if (st.length() > 0) {
+            if (s.length() > 0) {
                 s.append(" ");
             }
             
