@@ -43,8 +43,9 @@ import uk.co.drnaylor.chatparty.commands.PCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminChatCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminCommand;
 import uk.co.drnaylor.chatparty.commands.PartyCommand;
+import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
 
-public class ChatPartyPlugin extends JavaPlugin {
+public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
 
     private HashMap<String, Party> activeParties;
     private ArrayList<Player> spyPlayers;
@@ -63,6 +64,8 @@ public class ChatPartyPlugin extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
 
+        reloadConfig();
+        
         config_invertP = getConfig().getBoolean("invertP");
         config_toggleWithP = getConfig().getBoolean("toggleWithP");
         config_messageColor = ChatColor.getByChar(getConfig().getString("messageColor").substring(1));
@@ -101,10 +104,22 @@ public class ChatPartyPlugin extends JavaPlugin {
     }
 
     /**
+     * Reloads the config file, and sets up the banned word list.
+     * 
+     * This method overrides standard Bukkit behaviour.
+     */
+    @Override
+    public void reloadConfig() {
+        super.reloadConfig();
+        this.getNSFWChat().setupFilter(this.getConfig().getStringList("nsfwWordFilter"));
+    }
+    
+    /**
      * Gets the party chat template from the config file.
      *
      * @return A string representation of the template.
      */
+    @Override
     public String getPartyChatTemplate() {
         return ChatColor.translateAlternateColorCodes('&', getConfig().getString("partyChatFormat"));
     }
@@ -114,6 +129,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return A string representation of the template.
      */
+    @Override
     public String getAdminChatTemplate() {
         return ChatColor.translateAlternateColorCodes('&', getConfig().getString("adminChatFormat"));
     }
@@ -123,10 +139,11 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return A string representation of the template
      */
+    @Override
     public String getNSFWChatTemplate() {
         return ChatColor.translateAlternateColorCodes('&', getConfig().getString("NSFWChatFormat"));
     }
-
+    
     /**
      * Gets the ChatColor to use with messages.
      *
@@ -134,6 +151,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @see ChatColor
      */
+    @Override
     public ChatColor getMessageColour() {
         return config_messageColor;
     }
@@ -143,6 +161,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return The class.
      */
+    @Override
     public AdminChat getAdminChat() {
         return adminChat;
     }
@@ -152,6 +171,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return The NSFW chat class
      */
+    @Override
     public NSFWChat getNSFWChat() {
         return nsfwChat;
     }
@@ -161,6 +181,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @param party The party to save the data for.
      */
+    @Override
     public void saveParty(Party party) {
         ConfigurationSection partySection = getConfig().getConfigurationSection("parties").createSection(party.getName());
         partySection.set("leaders", party.getMembers().get(MemberType.LEADER));
@@ -175,6 +196,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player.
      * @return The party that player is part of, or null if not in a party.
      */
+    @Override
     public Party getPlayerParty(Player player) {
         String partyName = getConfig().getConfigurationSection("players").getString(player.getName());
         if (partyName != null) {
@@ -189,6 +211,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @param player The player to register as a spy.
      */
+    @Override
     public void registerSpy(Player player) {
         if (getConfig().getStringList("spy").contains(player.getName())) {
             spyPlayers.add(player);
@@ -200,6 +223,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @param player The player to remove from the spy list.
      */
+    @Override
     public void unregisterSpy(Player player) {
         spyPlayers.remove(player);
     }
@@ -211,6 +235,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @return <code>true</code> if the player now has spy, <code>false</code>
      * otherwise.
      */
+    @Override
     public boolean toggleSpy(Player player) {
         List<String> list = getConfig().getStringList("spy");
         boolean result;
@@ -234,6 +259,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player to toggle party chat for.
      * @return <code>true</code> if turned on, <code>false</code> otherwise.
      */
+    @Override
     public boolean togglePartyChat(Player player) {
         if (player.hasMetadata("partyToggle")) {
             player.removeMetadata("partyToggle", this);
@@ -252,6 +278,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player to toggle admin chat for.
      * @return <code>true</code> if turned on, <code>false</code> otherwise.
      */
+    @Override
     public boolean toggleAdminChat(Player player) {
         if (player.hasMetadata("adminToggle")) {
             player.removeMetadata("adminToggle", this);
@@ -270,6 +297,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player to toggle NSFW chat for.
      * @return <code>true</code> if turned on, <code>false</code> otherwise.
      */
+    @Override
     public boolean toggleNSFWChat(Player player) {
         if (player.hasMetadata("nsfwToggle")) {
             player.removeMetadata("nsfwToggle", this);
@@ -288,6 +316,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param pla The player to toggle NSFW chat for.
      * @return <code>true</code> if turned on, <code>false</code> otherwise.
      */
+    @Override
     public boolean toggleNSFWListening(Player pla) {
         if (!pla.hasMetadata("nsfwlistening")) {
             pla.setMetadata("nsfwlistening", new FixedMetadataValue(this, true));
@@ -304,6 +333,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player to toggle global chat for.
      * @return <code>true</code> if turned on, <code>false</code> otherwise.
      */
+    @Override
     public boolean toggleGlobalChat(Player player) {
         if (player.hasMetadata("globalChatToggle")) {
             player.removeMetadata("globalChatToggle", this);
@@ -323,6 +353,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param party The party that sent the message.
      * @param message The message to send.
      */
+    @Override
     public void sendSpyPartyMessage(Party party, String message) {
         for (Player player : spyPlayers) {
             if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || !party.getName().equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
@@ -342,6 +373,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param sender The player that sent the message.
      * @param message The message to send.
      */
+    @Override
     public void sendSpyChatMessage(Party party, Player sender, String message) {
         sendSpyPartyMessage(party, sender.getName() + ": " + message);
     }
@@ -354,6 +386,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @see Party
      */
+    @Override
     public Party loadParty(String name) {
         Party party = activeParties.get(name);
 
@@ -378,6 +411,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @param player The player to save.
      */
+    @Override
     public void savePlayer(Player player) {
         ConfigurationSection playerSection = getConfig().getConfigurationSection("players");
 
@@ -395,6 +429,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @param playerName The player to remove.
      */
+    @Override
     public void removePlayer(String playerName) {
         ConfigurationSection playerSection = getConfig().getConfigurationSection("players");
         playerSection.set(playerName, null);
@@ -407,6 +442,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @param player The player to send the message to.
      * @param message The message to send.
      */
+    @Override
     public void sendMessage(Player player, String message) {
         player.sendMessage(config_messageColor + message);
     }
@@ -417,6 +453,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      * @return <code>true</code> if we toggle with /p, <code>false</code>
      * otherwise.
      */
+    @Override
     public boolean getToggleWithP() {
         return this.config_toggleWithP;
     }
@@ -426,6 +463,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return <code>true</code> if so, <code>false</code> otherwise.
      */
+    @Override
     public boolean getInvertP() {
         return this.config_invertP;
     }
@@ -435,6 +473,7 @@ public class ChatPartyPlugin extends JavaPlugin {
      *
      * @return The active parties.
      */
+    @Override
     public Map<String, Party> getActiveParties() {
         return activeParties;
     }

@@ -23,6 +23,7 @@ package com.github.schmidtbochum.chatparty;
 import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.Iterator;
 import java.util.Set;
+import org.bukkit.ChatColor;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,7 +37,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 public class PlayerEventHandler implements Listener {
 
     // Private Fields
-    private ChatPartyPlugin plugin;
+    private final ChatPartyPlugin plugin;
 
     /**
      * Constructs the event handler.
@@ -125,6 +126,13 @@ public class PlayerEventHandler implements Listener {
 
             event.setCancelled(true);
         } else {
+            // If we are here, then check for banned words if the feature is enabled.
+            if (plugin.getNSFWChat().containsBannedWord(event.getMessage()) && plugin.getConfig().getBoolean("censorGlobalChat")) {
+                plugin.sendMessage(player, String.format("%sSwearing is not allowed in the global chat!", ChatColor.RED));
+                event.setCancelled(true);
+                return;
+            }
+            
             Set<Player> recipients = event.getRecipients();
 
             /* Set iterator */

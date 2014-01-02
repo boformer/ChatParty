@@ -21,20 +21,66 @@
 
 package supercheese200.NSFWChat;
 
-import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Scanner;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
 
 /**
  * Handles the NSFW channel. 
  */
 public class NSFWChat {
 
-    private final ChatPartyPlugin plugin;
+    private final IChatPartyPlugin plugin;
 
-    public NSFWChat(ChatPartyPlugin plugin) {
+    private final HashSet<String> bannedWords = new HashSet<String>();
+    
+    private final Pattern wordFilter = Pattern.compile("[a-zA-Z0-9\\,\\._\\-\\?\\!\\*]+", Pattern.CASE_INSENSITIVE);
+    
+    public NSFWChat(IChatPartyPlugin plugin) {
         this.plugin = plugin;
+    }
+    
+    /**
+     * Creates the set that contains the list of banned words.
+     * 
+     * @param strings The strings that contain the banned words.
+     */
+    public void setupFilter(Collection<String> strings) {
+        bannedWords.clear();
+        for (String s : strings) {
+            bannedWords.add(s.toLowerCase());
+        }
+    }
+    
+    /**
+     * Checks to see whether a banned word exists in the dictionary.
+     * 
+     * @param chat The chat message to scan.
+     * @return <code>true</code> if a banned word is found, <code>false</code> otherwise.
+     */
+    public boolean containsBannedWord(String chat) {
+        ChatColor.stripColor(chat);
+        Scanner scanner = new Scanner(chat.toLowerCase());
+        
+        while(scanner.hasNext(wordFilter)) {
+            String s = scanner.next(wordFilter);
+            s = s.replaceAll("[\\,\\._\\-\\?\\!\\*]", "");
+            if (bannedWords.contains(s)) {
+                // Banned word.
+                return true;
+            } else if (s.endsWith("s") && bannedWords.contains(s.substring(0, s.length() - 1))) {
+                // Pluralised banned word.
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     /**
@@ -55,6 +101,6 @@ public class NSFWChat {
                 pla.sendMessage(formattedMessage);
             }
         }
-        Bukkit.getServer().getConsoleSender().sendMessage(formattedMessage);
+        plugin.getServer().getConsoleSender().sendMessage(formattedMessage);
     }
 }

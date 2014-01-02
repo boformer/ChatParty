@@ -41,6 +41,9 @@ permissions:
     chatparty.user:
         description: Enter parties and chat
         default: op
+    chatparty.nsfw:
+        description: Access NSFW commands
+        default: op
     chatparty.leader:
         description: Create parties and invite players
         default: op
