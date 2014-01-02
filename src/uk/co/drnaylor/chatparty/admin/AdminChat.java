@@ -1,7 +1,6 @@
 /*
  ChatParty Plugin for Minecraft Bukkit Servers
- Copyright (C) 2013 Felix Schmidt
- Portions copyright (c) 2013-2014 Dr Daniel Naylor
+ This file: Copyright (C) 2013-2014 Dr Daniel Naylor
     
  This file is part of ChatParty.
 

@@ -102,13 +102,12 @@ public class PlayerEventHandler implements Listener {
             return;
         }
         
-        if (player.hasMetadata("nsfwToggle")) {
-        	plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
-        	event.setCancelled(true);
-        }
-        
         if (player.hasMetadata("adminToggle")) {
             plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
+            event.setCancelled(true);
+        }
+        else if (player.hasMetadata("nsfwToggle")) {
+            plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
             event.setCancelled(true);
         }
         else if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
