@@ -24,7 +24,7 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
             return true;
         }
         
-        Party party = plugin.loadParty(args[1]);
+        Party party = plugin.loadParty(args[0]);
         
         if (party == null) {
             // Party does not exist.
@@ -33,7 +33,7 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
         }
         
         StringBuilder sb = new StringBuilder();
-        for (int i = 2; i < args.length; i++) {
+        for (int i = 1; i < args.length; i++) {
             sb.append(args[i]);
             if (i+1 < args.length) {
                 sb.append(" ");
