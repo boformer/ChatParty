@@ -331,6 +331,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
             return true;
         } else {
             pla.removeMetadata("nsfwlistening", this);
+            pla.removeMetadata("nsfwToggle", this);
             return false;
         }
     }
