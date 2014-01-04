@@ -401,6 +401,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
 
         if (party == null) {
             party = Party.loadParty(name, this);
+            activeParties.put(party.getName(), party);
         }
 
         return party;
