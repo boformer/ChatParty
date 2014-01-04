@@ -22,6 +22,7 @@ package com.github.schmidtbochum.chatparty;
 
 import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import org.bukkit.ChatColor;
 
@@ -73,8 +74,13 @@ public class PlayerEventHandler implements Listener {
         } else {
             player.removeMetadata("isPartyLeader", plugin);
         }
-
+       
         party.activePlayers.add(player);
+
+        List<String> n = plugin.getConfig().getStringList("nsfwListeners");
+        if (n.contains(event.getPlayer().getName().toLowerCase())) {
+            player.setMetadata("nsfwlistening",  new FixedMetadataValue(plugin, true));
+        }
 
     }
 
@@ -95,6 +101,21 @@ public class PlayerEventHandler implements Listener {
             player.removeMetadata("party", plugin);
             player.removeMetadata("isPartyLeader", plugin);
         }
+        
+        List<String> n = plugin.getConfig().getStringList("nsfwListeners");
+        if (player.hasMetadata("nsfwlistening")) {
+            if (!n.contains(event.getPlayer().getName().toLowerCase())) {
+                n.add(event.getPlayer().getName().toLowerCase());
+            }
+        } else {
+            if (n.contains(event.getPlayer().getName().toLowerCase())) {
+                n.remove(event.getPlayer().getName().toLowerCase());
+            }
+        }
+        
+        plugin.getConfig().set("nsfwListeners", n);
+        plugin.saveConfig();
+        
         plugin.unregisterSpy(player);
     }
 

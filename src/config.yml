@@ -19,3 +19,5 @@ censorGlobalChat: true
 # Enter banned words here. There is no need to have seperate entries for 
 # words seperated by puctuation, the filter should deal with that automatically.
 nsfwWordFilter: []
+
+nsfwListeners: []

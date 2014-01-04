@@ -65,14 +65,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         // copy default config
         getConfig().options().copyDefaults(true);
         saveConfig();
-        
-        config_invertP = getConfig().getBoolean("invertP");
-        config_toggleWithP = getConfig().getBoolean("toggleWithP");
-        config_messageColor = ChatColor.getByChar(getConfig().getString("messageColor").substring(1));
-        if (config_messageColor == null) {
-            config_messageColor = ChatColor.WHITE;
-        }
-
+       
         activeParties = new HashMap<String, Party>();
         spyPlayers = new ArrayList<Player>();
 
@@ -115,6 +108,15 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     @Override
     public void reloadConfig() {
         super.reloadConfig();
+        
+        config_invertP = getConfig().getBoolean("invertP");
+        config_toggleWithP = getConfig().getBoolean("toggleWithP");
+        config_messageColor = ChatColor.getByChar(getConfig().getString("messageColor").substring(1));
+        if (config_messageColor == null) {
+            config_messageColor = ChatColor.WHITE;
+        }
+
+        
         if (this.getNSFWChat() != null) {
             this.getNSFWChat().setupFilter(this.getConfig().getStringList("nsfwWordFilter"));
         }
