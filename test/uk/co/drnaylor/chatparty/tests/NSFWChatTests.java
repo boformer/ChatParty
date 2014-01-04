@@ -28,7 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import supercheese200.NSFWChat.NSFWChat;
+import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
 import uk.co.drnaylor.chatparty.tests.stubs.ChatPartyPluginStub;
 
 @RunWith(Parameterized.class)

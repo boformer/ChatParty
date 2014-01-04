@@ -1,7 +1,7 @@
 /*
  ChatParty Plugin for Minecraft Bukkit Servers
- This file: Copyright (C) 2013-2014 Anthony Som
- Portions copyright (c) 2013-2014 Dr Daniel Naylor
+ This file: Copyright (C) 2013-2014  Dr Daniel Naylor
+ Portions copyright (c) 2013-2014 Anthony Som
     
  This file is part of ChatParty.
 
@@ -19,7 +19,7 @@
  along with ChatParty.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package supercheese200.NSFWChat;
+package uk.co.drnaylor.chatparty.nsfw;
 
 import java.util.ArrayList;
 import java.util.Collection;
