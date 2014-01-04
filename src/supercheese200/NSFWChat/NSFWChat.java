@@ -21,9 +21,11 @@
 
 package supercheese200.NSFWChat;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
@@ -56,6 +58,49 @@ public class NSFWChat {
         for (String s : strings) {
             bannedWords.add(s.toLowerCase());
         }
+    }
+    
+    /**
+     * Gets the set of banned words.
+     * 
+     * @return A set of banned words.
+     * 
+     * @see Set
+     */
+    public Set<String> getBannedWords() {
+        return bannedWords;
+    }
+    
+    /**
+     * Adds a word to the ban list.
+     * 
+     * @param word The word to add
+     * @return <code>true</code> if the word was added, <code>false</code> if the word
+     *         is already in the filter.
+     */
+    public boolean addBannedWord(String word) {
+        if (bannedWords.add(word)) {
+            this.saveBannedWords();
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Removes a word from the ban list.
+     * 
+     * @param word The word to remove
+     * @return <code>true</code> if the word was removed, <code>false</code> if the word
+     *         was not in the filter.
+     */
+    public boolean removeBannedWord(String word) {
+        if (bannedWords.remove(word)) {
+            this.saveBannedWords();
+            return true;
+        }
+       
+        return false;
     }
     
     /**
@@ -102,5 +147,11 @@ public class NSFWChat {
             }
         }
         plugin.getServer().getConsoleSender().sendMessage(formattedMessage);
+    }
+    
+    private void saveBannedWords() {
+        plugin.getConfig().set("nsfwWordFilter", new ArrayList<String>(bannedWords));
+        plugin.saveConfig();
+        plugin.reloadConfig();
     }
 }

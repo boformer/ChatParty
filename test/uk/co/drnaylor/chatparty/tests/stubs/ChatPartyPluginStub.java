@@ -24,6 +24,7 @@ import com.github.schmidtbochum.chatparty.Party;
 import java.util.Map;
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import supercheese200.NSFWChat.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
@@ -170,6 +171,16 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     @Override
     public Server getServer() {
         return server;
+    }
+
+    @Override
+    public void saveConfig() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public FileConfiguration getConfig() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     
 }

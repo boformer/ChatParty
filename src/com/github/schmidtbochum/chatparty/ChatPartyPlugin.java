@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
@@ -37,6 +38,7 @@ import supercheese200.NSFWChat.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
+import uk.co.drnaylor.chatparty.commands.ChatPartyAdminCommand;
 import uk.co.drnaylor.chatparty.commands.NSFWCommand;
 import uk.co.drnaylor.chatparty.commands.NSFWListenCommand;
 import uk.co.drnaylor.chatparty.commands.PCommand;
@@ -63,8 +65,6 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         // copy default config
         getConfig().options().copyDefaults(true);
         saveConfig();
-
-        reloadConfig();
         
         config_invertP = getConfig().getBoolean("invertP");
         config_toggleWithP = getConfig().getBoolean("toggleWithP");
@@ -82,6 +82,9 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
 
         adminChat = new AdminChat(this);
         nsfwChat = new NSFWChat(this);
+        
+        reloadConfig();
+        
         getServer().getPluginManager().registerEvents(new PlayerEventHandler(this), this);
 
         // Time to register some commands!
@@ -93,6 +96,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         getCommand("partyadminchat").setExecutor(new PartyAdminChatCommand(this));
         getCommand("nsfw").setExecutor(new NSFWCommand(this));
         getCommand("nsfwlisten").setExecutor(new NSFWListenCommand(this));
+        getCommand("chatparty").setExecutor(new ChatPartyAdminCommand(this));
     }
 
     /**
@@ -111,7 +115,9 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     @Override
     public void reloadConfig() {
         super.reloadConfig();
-        this.getNSFWChat().setupFilter(this.getConfig().getStringList("nsfwWordFilter"));
+        if (this.getNSFWChat() != null) {
+            this.getNSFWChat().setupFilter(this.getConfig().getStringList("nsfwWordFilter"));
+        }
     }
     
     /**
@@ -360,7 +366,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
                 player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
             }
         }
-        getLogger().info("[" + party.getShortName() + "] " + message);
+        getLogger().log(Level.INFO, "[{0}] {1}", new Object[]{party.getShortName(), message});
     }
 
     /**

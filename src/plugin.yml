@@ -37,6 +37,10 @@ commands:
     description: Send an NSFW chat message
     aliases: [nsfwch, ncha]
     permission: chatparty.nsfw
+  chatparty:
+    description: Admin commands for ChatParty
+    aliases: [cpa]
+    permission: chatparty.admin
 permissions:
     chatparty.user:
         description: Enter parties and chat
@@ -50,7 +54,7 @@ permissions:
         children:
         - chatparty.user
     chatparty.admin:
-        description: Ability to see all party chats (SocialSpy)
+        description: Ability to see all party chats (SocialSpy) and use admin commands
         default: op
         children:
         - chatparty.leader

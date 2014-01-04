@@ -53,7 +53,7 @@ public class PlayerEventHandler implements Listener {
      * 
      * @param event 
      */
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
@@ -78,8 +78,12 @@ public class PlayerEventHandler implements Listener {
 
     }
 
-    //when a player quits...
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    /**
+     * Fires an event when the player leaves the server.
+     * 
+     * @param event The event to handle.
+     */
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         if (player.hasMetadata("party")) {
@@ -94,6 +98,11 @@ public class PlayerEventHandler implements Listener {
         plugin.unregisterSpy(player);
     }
 
+    /**
+     * Fires an event when the player chats on the server.
+     * 
+     * @param event 
+     */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
