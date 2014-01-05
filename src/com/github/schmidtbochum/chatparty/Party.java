@@ -312,6 +312,7 @@ public class Party {
             }
         }
 
+        pluginInstance.getActiveParties().put(party.getName(), party);
         return party;
     }
 
