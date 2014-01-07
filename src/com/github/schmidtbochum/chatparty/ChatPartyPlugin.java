@@ -379,12 +379,17 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      * out with the correct formatting.
      *
      * @param party The party that sent the message.
-     * @param sender The player that sent the message.
+     * @param sender The player that sent the message, or null if console.
      * @param message The message to send.
      */
     @Override
     public void sendSpyChatMessage(Party party, Player sender, String message) {
-        sendSpyPartyMessage(party, sender.getName() + ": " + message);
+        String name = "*Console*";
+        if (sender != null) {
+            name = sender.getName();
+        }
+        
+        sendSpyPartyMessage(party, name + ": " + message);
     }
 
     /**

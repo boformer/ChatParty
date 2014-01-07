@@ -69,16 +69,19 @@ public class Party {
     }
     
     public void sendPlayerMessage(Player sender, String message) {
-        sendPlayerMessage(sender.getDisplayName(), message);
-    }
-
-    public void sendPlayerMessage(String sender, String message) {
-        String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", sender).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
+        String playerName = "*Console*";
+        if (sender != null) {
+            playerName = sender.getDisplayName();
+        }
+        
+        String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", playerName).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
         for (Player player : activePlayers) {
             if (player.hasPermission("chatparty.user")) {
                 player.sendMessage(formattedMessage);
             }
         }
+        
+        plugin.sendSpyChatMessage(this, sender, message);
     }
 
     public void sendPartyMessage(String message) {

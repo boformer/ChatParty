@@ -148,7 +148,6 @@ public class PlayerEventHandler implements Listener {
             Party party = plugin.loadParty(partyName);
 
             party.sendPlayerMessage(player, message);
-            plugin.sendSpyChatMessage(party, player, message);
 
             event.setCancelled(true);
         } else if (player.hasMetadata("globalChatToggle")) {

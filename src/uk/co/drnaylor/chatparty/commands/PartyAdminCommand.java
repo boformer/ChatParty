@@ -93,7 +93,7 @@ public class PartyAdminCommand extends BaseCommandExecutor {
 
         sendMessage(cs, "--- Chat Parties ---");
         sendMessage(cs, "A star indicates a leader of the party.");
-        sendMessage(cs, "----------");
+        sendMessage(cs, "--------------------");
 
         // Get the active parties.
         Map<String, Party> parties = plugin.getActiveParties();
@@ -171,6 +171,8 @@ public class PartyAdminCommand extends BaseCommandExecutor {
             Party party = plugin.getPlayerParty(player);
             if (party.getName().equalsIgnoreCase(partyName)) {
                 party.removePlayer(player, true);
+                sendMessage(cs, "The player was removed from the party.");
+                return;
             }
             
             sendMessage(cs, "That player is not in the party specified.");
@@ -208,7 +210,7 @@ public class PartyAdminCommand extends BaseCommandExecutor {
     private void addSubcommand(CommandSender cs, String playerName, String partyName) {
         Player player = plugin.getServer().getPlayerExact(playerName);
         
-        if (player != null) {
+        if (player == null) {
             sendMessage(cs, "That player is not online.");
             return;
         }
@@ -216,6 +218,7 @@ public class PartyAdminCommand extends BaseCommandExecutor {
         Party current = plugin.getPlayerParty(player);
         if (current != null) {
             sendMessage(cs, String.format("%s is currently in the party %s. Remove them before adding them to a new party.", playerName, partyName));
+            return;
         }
         
         Party party = plugin.loadParty(partyName);

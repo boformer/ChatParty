@@ -107,7 +107,6 @@ public class PCommand extends BaseCommandExecutor {
         Party party = plugin.loadParty(partyName);
 
         party.sendPlayerMessage(player, message);
-        plugin.sendSpyChatMessage(party, player, message);
         return true;
     }
 

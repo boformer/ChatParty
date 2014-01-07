@@ -39,14 +39,8 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
                 sb.append(" ");
             }
         }
-        
-        String sender = "*Console*";
-        Player player = this.getPlayerFromSender(cs);
-        if (player != null) {
-            sender = player.getDisplayName();
-        }
-        
-        party.sendPlayerMessage(sender, string);
+
+        party.sendPlayerMessage(this.getPlayerFromSender(cs), sb.toString());
         return true;
     }
 

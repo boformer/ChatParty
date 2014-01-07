@@ -77,7 +77,7 @@ public class ChatPartyAdminCommand extends BaseCommandExecutor {
     }
 
     private void helpSubcommand(CommandSender cs) {
-        this.sendMessage(cs, "--- ChatParty Admin commands---");
+        this.sendMessage(cs, "--- ChatParty Admin commands ---");
         this.sendMessage(cs, "/cpa reload - Reloads the configuration file.");
         this.sendMessage(cs, "/cpa addword <word> - Adds a word to the NSFW list.");
         this.sendMessage(cs, "/cpa removeword <word> - Removes a word from the NSFW list.");
