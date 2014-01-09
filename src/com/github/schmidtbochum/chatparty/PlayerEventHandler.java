@@ -42,7 +42,7 @@ public class PlayerEventHandler implements Listener {
 
     /**
      * Constructs the event handler.
-     * 
+     *
      * @param plugin The plugin object to be used with the events.
      */
     public PlayerEventHandler(ChatPartyPlugin plugin) {
@@ -51,8 +51,8 @@ public class PlayerEventHandler implements Listener {
 
     /**
      * Fires when a player joins the server.
-     * 
-     * @param event 
+     *
+     * @param event
      */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     public void onPlayerJoin(PlayerJoinEvent event) {
@@ -74,20 +74,20 @@ public class PlayerEventHandler implements Listener {
         } else {
             player.removeMetadata("isPartyLeader", plugin);
         }
-       
+
         party.activePlayers.add(player);
 
         List<String> n = plugin.getConfig().getStringList("nsfwListeners");
         if (n.contains(event.getPlayer().getName().toLowerCase())) {
-            player.setMetadata("nsfwlistening",  new FixedMetadataValue(plugin, true));
+            player.setMetadata("nsfwlistening", new FixedMetadataValue(plugin, true));
         }
-        
+
         plugin.sendMessage(player, "You are listening to the NSFW channel.");
     }
 
     /**
      * Fires an event when the player leaves the server.
-     * 
+     *
      * @param event The event to handle.
      */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
@@ -102,7 +102,7 @@ public class PlayerEventHandler implements Listener {
             player.removeMetadata("party", plugin);
             player.removeMetadata("isPartyLeader", plugin);
         }
-        
+
         List<String> n = plugin.getConfig().getStringList("nsfwListeners");
         if (player.hasMetadata("nsfwlistening")) {
             if (!n.contains(event.getPlayer().getName().toLowerCase())) {
@@ -113,36 +113,35 @@ public class PlayerEventHandler implements Listener {
                 n.remove(event.getPlayer().getName().toLowerCase());
             }
         }
-        
+
         plugin.getConfig().set("nsfwListeners", n);
         plugin.saveConfig();
-        
+
         plugin.unregisterSpy(player);
     }
 
     /**
      * Fires an event when the player chats on the server.
-     * 
-     * @param event 
+     *
+     * @param event
      */
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        if (player.hasMetadata("ignore")) {
+        boolean hasIgnore = player.hasMetadata("ignore");
+
+        if (hasIgnore) {
             player.removeMetadata("ignore", plugin);
-            return;
-        }
-        
-        if (player.hasMetadata("adminToggle")) {
+        } else if (player.hasMetadata("adminToggle")) {
             plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
             event.setCancelled(true);
-        }
-        else if (player.hasMetadata("nsfwToggle")) {
+            return;
+        } else if (player.hasMetadata("nsfwToggle")) {
             plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
             event.setCancelled(true);
-        }
-        else if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
+            return;
+        } else if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
             String message = event.getMessage();
 
             String partyName = player.getMetadata("party").get(0).asString();
@@ -151,29 +150,36 @@ public class PlayerEventHandler implements Listener {
             party.sendPlayerMessage(player, message);
 
             event.setCancelled(true);
+            return;
         } else if (player.hasMetadata("globalChatToggle")) {
             plugin.sendMessage(player, "Message cancelled. Type /chat to enable the global chat.");
 
             event.setCancelled(true);
-        } else {
-            // If we are here, then check for banned words if the feature is enabled.
-            if (plugin.getNSFWChat().containsBannedWord(event.getMessage()) && plugin.getConfig().getBoolean("censorGlobalChat")) {
-                plugin.sendMessage(player, String.format("%sSwearing is not allowed in the global chat!", ChatColor.RED));
-                event.setCancelled(true);
-                return;
-            }
-            
-            Set<Player> recipients = event.getRecipients();
+            return;
+        }
+        
+        // If we are here, then check for banned words if the feature is enabled.
+        if (plugin.getNSFWChat().containsBannedWord(event.getMessage()) && plugin.getConfig().getBoolean("censorGlobalChat")) {
+            plugin.sendMessage(player, String.format("%sSwearing is not allowed in the global chat!", ChatColor.RED));
+            event.setCancelled(true);
+            return;
+        }
 
-            /* Set iterator */
-            Iterator<Player> recipientIterator = recipients.iterator();
+        if (hasIgnore) {
+            return;
+        }
 
-            while (recipientIterator.hasNext()) {
-                if (recipientIterator.next().hasMetadata("globalChatToggle")) {
-                    // Remove an object from a set with the iterator
-                    recipientIterator.remove();
-                }
+        Set<Player> recipients = event.getRecipients();
+
+        /* Set iterator */
+        Iterator<Player> recipientIterator = recipients.iterator();
+
+        while (recipientIterator.hasNext()) {
+            if (recipientIterator.next().hasMetadata("globalChatToggle")) {
+                // Remove an object from a set with the iterator
+                recipientIterator.remove();
             }
         }
+
     }
 }
