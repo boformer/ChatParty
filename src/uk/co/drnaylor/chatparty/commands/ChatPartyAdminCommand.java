@@ -68,7 +68,7 @@ public class ChatPartyAdminCommand extends BaseCommandExecutor {
     }
 
     private void removeWordSubcommand(CommandSender cs, String word) {
-        if (plugin.getNSFWChat().addBannedWord(word)) {
+        if (plugin.getNSFWChat().removeBannedWord(word)) {
             this.sendMessage(cs, "The word was succesfully removed from the list.");
             return;
         }

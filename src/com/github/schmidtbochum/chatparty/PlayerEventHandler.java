@@ -81,7 +81,8 @@ public class PlayerEventHandler implements Listener {
         if (n.contains(event.getPlayer().getName().toLowerCase())) {
             player.setMetadata("nsfwlistening",  new FixedMetadataValue(plugin, true));
         }
-
+        
+        plugin.sendMessage(player, "You are listening to the NSFW channel.");
     }
 
     /**
