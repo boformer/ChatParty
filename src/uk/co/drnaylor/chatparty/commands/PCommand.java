@@ -26,6 +26,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 
 /**
  * Executor for the /p command
@@ -55,7 +56,7 @@ public class PCommand extends BaseCommandExecutor {
         }
         
         // Is the player in a party?
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -92,9 +93,9 @@ public class PCommand extends BaseCommandExecutor {
 
         String message = builder.toString();
 
-        if (plugin.getInvertP() && player.hasMetadata("partyToggle")) {
-            if (!player.hasMetadata("globalChatToggle")) {
-                player.setMetadata("ignore", new FixedMetadataValue(plugin, true));
+        if (plugin.getInvertP() && player.hasMetadata(MetadataState.PARTYCHAT.name())) {
+            if (!player.hasMetadata(MetadataState.GLOBALCHATOFF.name())) {
+                player.setMetadata(MetadataState.IGNORE.name(), new FixedMetadataValue(plugin, true));
                 player.chat(message);
                 return true;
             } else {
@@ -103,7 +104,7 @@ public class PCommand extends BaseCommandExecutor {
             }
         }
 
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
 
         party.sendPlayerMessage(player, message);

@@ -25,6 +25,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 
 /**
  * A class that represents the /nsfw command.
@@ -62,7 +63,7 @@ public class NSFWCommand extends BaseCommandExecutor {
             
             if (plugin.toggleNSFWChat(pla)) {
                 // If the player is not listening to the NSFW chat, auto toggle it on.
-                if (pla.hasMetadata("nsfwlistening")) {
+                if (pla.hasMetadata(MetadataState.NSFWLISTENING.name())) {
                     plugin.sendMessage(pla, "NSFW Chat is ON");
                 } else {
                     plugin.toggleNSFWListening(pla);
@@ -76,7 +77,7 @@ public class NSFWCommand extends BaseCommandExecutor {
     }
 
     private void directToNSFWChat(Player player, String[] args) {
-        if (player != null && !player.hasMetadata("nsfwlistening")) {
+        if (player != null && !player.hasMetadata(MetadataState.NSFWLISTENING.name())) {
             // The player should be told they are not listening.
             plugin.sendMessage(player, "You cannot send a message to the NSFW channel if you are not listening to it!");
             return;

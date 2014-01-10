@@ -33,6 +33,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 
 public class Party {
 
@@ -99,7 +100,7 @@ public class Party {
      * @param player The player to add to the party.
      */
     public void addPlayer(Player player) {
-        player.removeMetadata("partyInvitation", plugin);
+        player.removeMetadata(MetadataState.PARTYINVITE.name(), plugin);
 
         sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " joined the party.");
         plugin.sendSpyPartyMessage(this, player.getName() + " joined the party.");
@@ -107,7 +108,7 @@ public class Party {
         members.add(player.getName());
         activePlayers.add(player);
 
-        player.setMetadata("party", new FixedMetadataValue(plugin, name));
+        player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, name));
 
         plugin.sendMessage(player, "You joined the party \"" + name + "\".");
         plugin.sendMessage(player, "Chat with /p <message>");
@@ -133,8 +134,8 @@ public class Party {
      * @param kicked Set to <code>true</code> if the player was kicked
      */
     public void removePlayer(Player player, boolean kicked) {
-        player.removeMetadata("party", plugin);
-        player.removeMetadata("isPartyLeader", plugin);
+        player.removeMetadata(MetadataState.INPARTY.name(), plugin);
+        player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
 
         if (!disbanding) {
             leaders.remove(player.getName());
@@ -169,7 +170,7 @@ public class Party {
      * @param player The player that is being kicked.
      */
     public void kickPlayer(Player leaderPlayer, OfflinePlayer player) {
-        if (!leaderPlayer.hasMetadata("isPartyLeader")) {
+        if (!leaderPlayer.hasMetadata(MetadataState.PARTYLEADER.name())) {
             plugin.sendMessage(leaderPlayer, "Only party leaders can kick other players.");
             return;
         }
@@ -243,7 +244,7 @@ public class Party {
         Player onlinePlayer = promotedPlayer.getPlayer();
 
         if (onlinePlayer != null && onlinePlayer.isOnline()) {
-            onlinePlayer.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
+            onlinePlayer.setMetadata(MetadataState.PARTYLEADER.name(), new FixedMetadataValue(plugin, true));
         }
         plugin.saveParty(this);
 
@@ -281,8 +282,8 @@ public class Party {
         party.leaders.add(player.getName());
         party.activePlayers.add(player);
 
-        player.setMetadata("party", new FixedMetadataValue(plugin, party.name));
-        player.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
+        player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, party.name));
+        player.setMetadata(MetadataState.PARTYLEADER.name(), new FixedMetadataValue(plugin, true));
 
         plugin.getActiveParties().put(partyName, party);
 

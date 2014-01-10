@@ -45,6 +45,7 @@ import uk.co.drnaylor.chatparty.commands.PCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminChatCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminCommand;
 import uk.co.drnaylor.chatparty.commands.PartyCommand;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
 
 public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
@@ -269,13 +270,13 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public boolean togglePartyChat(Player player) {
-        if (player.hasMetadata("partyToggle")) {
-            player.removeMetadata("partyToggle", this);
+        if (player.hasMetadata(MetadataState.PARTYCHAT.name())) {
+            player.removeMetadata(MetadataState.PARTYCHAT.name(), this);
             return false;
         } else {
-            player.setMetadata("partyToggle", new FixedMetadataValue(this, true));
-            player.removeMetadata("adminToggle", this);
-            player.removeMetadata("nsfwToggle", this);
+            player.setMetadata(MetadataState.PARTYCHAT.name(), new FixedMetadataValue(this, true));
+            player.removeMetadata(MetadataState.ADMINCHAT.name(), this);
+            player.removeMetadata(MetadataState.NSFWCHAT.name(), this);
             return true;
         }
     }
@@ -288,13 +289,13 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public boolean toggleAdminChat(Player player) {
-        if (player.hasMetadata("adminToggle")) {
-            player.removeMetadata("adminToggle", this);
+        if (player.hasMetadata(MetadataState.ADMINCHAT.name())) {
+            player.removeMetadata(MetadataState.ADMINCHAT.name(), this);
             return false;
         } else {
-            player.setMetadata("adminToggle", new FixedMetadataValue(this, true));
-            player.removeMetadata("partyToggle", this);
-            player.removeMetadata("nsfwToggle", this);
+            player.setMetadata(MetadataState.ADMINCHAT.name(), new FixedMetadataValue(this, true));
+            player.removeMetadata(MetadataState.PARTYCHAT.name(), this);
+            player.removeMetadata(MetadataState.NSFWCHAT.name(), this);
             return true;
         }
     }
@@ -307,13 +308,13 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public boolean toggleNSFWChat(Player player) {
-        if (player.hasMetadata("nsfwToggle")) {
-            player.removeMetadata("nsfwToggle", this);
+        if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {
+            player.removeMetadata(MetadataState.NSFWCHAT.name(), this);
             return false;
         } else {
-            player.setMetadata("nsfwToggle", new FixedMetadataValue(this, true));
-            player.removeMetadata("adminToggle", this);
-            player.removeMetadata("partyToggle", this);
+            player.setMetadata(MetadataState.NSFWCHAT.name(), new FixedMetadataValue(this, true));
+            player.removeMetadata(MetadataState.ADMINCHAT.name(), this);
+            player.removeMetadata(MetadataState.PARTYCHAT.name(), this);
             return true;
         }
     }
@@ -326,12 +327,12 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public boolean toggleNSFWListening(Player pla) {
-        if (!pla.hasMetadata("nsfwlistening")) {
-            pla.setMetadata("nsfwlistening", new FixedMetadataValue(this, true));
+        if (!pla.hasMetadata(MetadataState.NSFWLISTENING.name())) {
+            pla.setMetadata(MetadataState.NSFWLISTENING.name(), new FixedMetadataValue(this, true));
             return true;
         } else {
-            pla.removeMetadata("nsfwlistening", this);
-            pla.removeMetadata("nsfwToggle", this);
+            pla.removeMetadata(MetadataState.NSFWLISTENING.name(), this);
+            pla.removeMetadata(MetadataState.NSFWCHAT.name(), this);
             return false;
         }
     }
@@ -344,11 +345,11 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public boolean toggleGlobalChat(Player player) {
-        if (player.hasMetadata("globalChatToggle")) {
-            player.removeMetadata("globalChatToggle", this);
+        if (player.hasMetadata(MetadataState.GLOBALCHATOFF.name())) {
+            player.removeMetadata(MetadataState.GLOBALCHATOFF.name(), this);
             return false;
         } else {
-            player.setMetadata("globalChatToggle", new FixedMetadataValue(this, true));
+            player.setMetadata(MetadataState.GLOBALCHATOFF.name(), new FixedMetadataValue(this, true));
             return true;
         }
     }
@@ -365,7 +366,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     @Override
     public void sendSpyPartyMessage(Party party, String message) {
         for (Player player : spyPlayers) {
-            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata("party") || !party.getName().equalsIgnoreCase(player.getMetadata("party").get(0).asString()))) {
+            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata(MetadataState.INPARTY.name()) || !party.getName().equalsIgnoreCase(player.getMetadata(MetadataState.INPARTY.name()).get(0).asString()))) {
                 player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
             }
         }
@@ -429,10 +430,10 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     public void savePlayer(Player player) {
         ConfigurationSection playerSection = getConfig().getConfigurationSection("players");
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             playerSection.set(player.getName(), null);
         } else {
-            String partyName = player.getMetadata("party").get(0).asString();
+            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
             playerSection.set(player.getName(), partyName);
         }
         saveConfig();

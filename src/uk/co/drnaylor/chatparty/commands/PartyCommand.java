@@ -32,6 +32,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 
 public class PartyCommand extends BaseCommandExecutor {
 
@@ -115,12 +116,12 @@ public class PartyCommand extends BaseCommandExecutor {
 
         plugin.sendMessage(player, "/chat" + ChatColor.WHITE + ": Toggle the public chat.");
 
-        if (player.hasMetadata("party")) {
+        if (player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "/p <message>" + ChatColor.WHITE + ": Send a message to your party");
             plugin.sendMessage(player, "/party leave" + ChatColor.WHITE + ": Leave your party");
             plugin.sendMessage(player, "/party members" + ChatColor.WHITE + ": Show the member list");
             plugin.sendMessage(player, "/party toggle" + ChatColor.WHITE + ": Toggle the party chat");
-            if (player.hasMetadata("isPartyLeader") && player.hasPermission("chatparty.leader")) {
+            if (player.hasMetadata(MetadataState.PARTYLEADER.name()) && player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "/party invite <player>" + ChatColor.WHITE + ": Invite a player to your party");
                 plugin.sendMessage(player, "/party kick <player>" + ChatColor.WHITE + ": Kick a player from your party");
                 //sendMessage(player, "/party name <name>" + ChatColor.WHITE + ": Rename your party.");
@@ -143,12 +144,12 @@ public class PartyCommand extends BaseCommandExecutor {
      * @param player The player involved.
      */
     private void joinSubcommand(Player player) {
-        if (!player.hasMetadata("partyInvitation")) {
+        if (!player.hasMetadata(MetadataState.PARTYINVITE.name())) {
             noInvitation(player);
             return;
         }
 
-        String partyName = player.getMetadata("partyInvitation").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.PARTYINVITE.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
 
         if (party == null) {
@@ -166,7 +167,7 @@ public class PartyCommand extends BaseCommandExecutor {
      * @param player The player that is leaving their party.
      */
     private void leaveSubcommand(Player player) {
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -175,7 +176,7 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         //CONDITIONS END
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
         party.removePlayer(player, false);
     }
@@ -193,7 +194,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -201,7 +202,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("isPartyLeader")) {
+        if (!player.hasMetadata(MetadataState.PARTYLEADER.name())) {
             plugin.sendMessage(player, "Only party leaders can invite other players.");
             return;
         }
@@ -218,15 +219,15 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (invitedPlayer.hasMetadata("party")) {
+        if (invitedPlayer.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "The player is already in a party.");
             return;
         }
 
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
 
-        invitedPlayer.setMetadata("partyInvitation", new FixedMetadataValue(plugin, party.getName()));
+        invitedPlayer.setMetadata(MetadataState.PARTYINVITE.name(), new FixedMetadataValue(plugin, party.getName()));
 
         plugin.sendMessage(player, "You invited " + invitedPlayer.getName() + " to your party.");
 
@@ -246,7 +247,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (player.hasMetadata("party")) {
+        if (player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are already in a party.");
             return;
         }
@@ -280,7 +281,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -288,14 +289,14 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("isPartyLeader")) {
+        if (!player.hasMetadata(MetadataState.PARTYLEADER.name())) {
             plugin.sendMessage(player, "Only party leaders can promote other players.");
             return;
         }
 
         OfflinePlayer promotedPlayer = plugin.getServer().getOfflinePlayer(toPromote);
 
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
 
         Map<MemberType, List<String>> members = party.getMembers();
@@ -320,7 +321,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -330,7 +331,7 @@ public class PartyCommand extends BaseCommandExecutor {
 
         OfflinePlayer kickedPlayer = plugin.getServer().getOfflinePlayer(playerName);
 
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         plugin.loadParty(partyName).kickPlayer(player, kickedPlayer);
     }
 
@@ -340,7 +341,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -349,7 +350,7 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         //CONDITIONS END
-        String partyName = player.getMetadata("party").get(0).asString();
+        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
         Party party = plugin.loadParty(partyName);
 
         Map<MemberType, List<String>> mems = party.getMembers();
@@ -387,7 +388,7 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata("party")) {
+        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");

@@ -34,6 +34,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 
 public class PlayerEventHandler implements Listener {
 
@@ -60,29 +61,30 @@ public class PlayerEventHandler implements Listener {
 
         plugin.registerSpy(player);
 
+        // NSFW registration
+        List<String> n = plugin.getConfig().getStringList("nsfwListeners");
+        if (n.contains(event.getPlayer().getName().toLowerCase())) {
+            player.setMetadata(MetadataState.NSFWLISTENING.name(), new FixedMetadataValue(plugin, true));
+            plugin.sendMessage(player, "You are listening to the NSFW channel.");
+        }
+        
+        // Party registration
         Party party = plugin.getPlayerParty(player);
 
         if (party == null) {
-            player.removeMetadata("party", plugin);
+            player.removeMetadata(MetadataState.INPARTY.name(), plugin);
             return;
         }
 
-        player.setMetadata("party", new FixedMetadataValue(plugin, party.getName()));
+        player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, party.getName()));
 
         if (party.getMembers().get(MemberType.LEADER).contains(player.getName())) {
-            player.setMetadata("isPartyLeader", new FixedMetadataValue(plugin, true));
+            player.setMetadata(MetadataState.PARTYLEADER.name(), new FixedMetadataValue(plugin, true));
         } else {
-            player.removeMetadata("isPartyLeader", plugin);
+            player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
         }
 
         party.activePlayers.add(player);
-
-        List<String> n = plugin.getConfig().getStringList("nsfwListeners");
-        if (n.contains(event.getPlayer().getName().toLowerCase())) {
-            player.setMetadata("nsfwlistening", new FixedMetadataValue(plugin, true));
-        }
-
-        plugin.sendMessage(player, "You are listening to the NSFW channel.");
     }
 
     /**
@@ -93,21 +95,23 @@ public class PlayerEventHandler implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        if (player.hasMetadata("party")) {
-            String partyName = player.getMetadata("party").get(0).asString();
+        if (player.hasMetadata(MetadataState.INPARTY.name())) {
+            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
             Party party = plugin.loadParty(partyName);
 
             party.activePlayers.remove(player);
 
-            player.removeMetadata("party", plugin);
-            player.removeMetadata("isPartyLeader", plugin);
+            player.removeMetadata(MetadataState.INPARTY.name(), plugin);
+            player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
         }
 
         List<String> n = plugin.getConfig().getStringList("nsfwListeners");
-        if (player.hasMetadata("nsfwlistening")) {
+        if (player.hasMetadata(MetadataState.NSFWLISTENING.name())) {
             if (!n.contains(event.getPlayer().getName().toLowerCase())) {
                 n.add(event.getPlayer().getName().toLowerCase());
             }
+            
+            player.removeMetadata(MetadataState.NSFWLISTENING.name(), plugin);
         } else {
             if (n.contains(event.getPlayer().getName().toLowerCase())) {
                 n.remove(event.getPlayer().getName().toLowerCase());
@@ -129,29 +133,29 @@ public class PlayerEventHandler implements Listener {
     void onPlayerChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
 
-        boolean hasIgnore = player.hasMetadata("ignore");
+        boolean hasIgnore = player.hasMetadata(MetadataState.IGNORE.name());
 
         if (hasIgnore) {
-            player.removeMetadata("ignore", plugin);
-        } else if (player.hasMetadata("adminToggle")) {
+            player.removeMetadata(MetadataState.IGNORE.name(), plugin);
+        } else if (player.hasMetadata(MetadataState.ADMINCHAT.name())) {
             plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
             event.setCancelled(true);
             return;
-        } else if (player.hasMetadata("nsfwToggle")) {
+        } else if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {
             plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
             event.setCancelled(true);
             return;
-        } else if (player.hasMetadata("partyToggle") && player.hasMetadata("party")) {
+        } else if (player.hasMetadata(MetadataState.PARTYCHAT.name()) && player.hasMetadata(MetadataState.INPARTY.name())) {
             String message = event.getMessage();
 
-            String partyName = player.getMetadata("party").get(0).asString();
+            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
             Party party = plugin.loadParty(partyName);
 
             party.sendPlayerMessage(player, message);
 
             event.setCancelled(true);
             return;
-        } else if (player.hasMetadata("globalChatToggle")) {
+        } else if (player.hasMetadata(MetadataState.GLOBALCHATOFF.name())) {
             plugin.sendMessage(player, "Message cancelled. Type /chat to enable the global chat.");
 
             event.setCancelled(true);
@@ -175,7 +179,7 @@ public class PlayerEventHandler implements Listener {
         Iterator<Player> recipientIterator = recipients.iterator();
 
         while (recipientIterator.hasNext()) {
-            if (recipientIterator.next().hasMetadata("globalChatToggle")) {
+            if (recipientIterator.next().hasMetadata(MetadataState.GLOBALCHATOFF.name())) {
                 // Remove an object from a set with the iterator
                 recipientIterator.remove();
             }

@@ -31,6 +31,7 @@ import java.util.regex.Pattern;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import uk.co.drnaylor.chatparty.enums.MetadataState;
 import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
 
 /**
@@ -142,7 +143,7 @@ public class NSFWChat {
 
         String formattedMessage = plugin.getNSFWChatTemplate().replace("{DISPLAYNAME}", tag).replace("{MESSAGE}", message);
         for (Player pla : Bukkit.getServer().getOnlinePlayers()) {
-            if (pla.hasMetadata("nsfwlistening")) {
+            if (pla.hasMetadata(MetadataState.NSFWLISTENING.name())) {
                 pla.sendMessage(formattedMessage);
             }
         }
