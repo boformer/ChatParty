@@ -22,12 +22,12 @@ package com.github.schmidtbochum.chatparty;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
@@ -153,13 +153,14 @@ public class Party {
             plugin.sendMessage(player, "You left the party \"" + name + "\".");
         }
 
+        plugin.savePlayer(player);
+        
         if (leaders.isEmpty()) {
             sendPartyMessage("The party was disbanded because all leaders left.");
             plugin.sendSpyPartyMessage(this, "The party was disbanded.");
             disband();
         }
 
-        plugin.savePlayer(player);
         plugin.saveParty(this);
     }
 
@@ -202,13 +203,18 @@ public class Party {
 
         disbanding = true;
 
-        for (String playerName : members) {
-            removePlayer(playerName);
+        Iterator<String> it = members.iterator();
+        while (it.hasNext()) {
+            removePlayer(it.next());
+            it.remove();
         }
-        for (String playerName : leaders) {
-            removePlayer(playerName);
+        
+        Iterator<String> it2 = leaders.iterator();
+        while (it2.hasNext()) {
+            removePlayer(it2.next());
+            it2.remove();
         }
-
+        
         plugin.getActiveParties().remove(name);
 
         leaders = null;
