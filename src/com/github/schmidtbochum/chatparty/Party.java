@@ -206,13 +206,11 @@ public class Party {
         Iterator<String> it = members.iterator();
         while (it.hasNext()) {
             removePlayer(it.next());
-            it.remove();
         }
         
         Iterator<String> it2 = leaders.iterator();
         while (it2.hasNext()) {
             removePlayer(it2.next());
-            it2.remove();
         }
         
         plugin.getActiveParties().remove(name);
