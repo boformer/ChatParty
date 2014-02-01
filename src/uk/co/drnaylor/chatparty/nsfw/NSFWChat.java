@@ -144,7 +144,11 @@ public class NSFWChat {
         String formattedMessage = plugin.getNSFWChatTemplate().replace("{DISPLAYNAME}", tag).replace("{MESSAGE}", message);
         for (Player pla : Bukkit.getServer().getOnlinePlayers()) {
             if (pla.hasMetadata(MetadataState.NSFWLISTENING.name())) {
-                pla.sendMessage(formattedMessage);
+                if (pla.hasPermission("chatparty.nsfw")) {
+                    pla.sendMessage(formattedMessage);
+                } else {
+                    plugin.toggleNSFWListening(pla);
+                }
             }
         }
         plugin.getServer().getConsoleSender().sendMessage(formattedMessage);
