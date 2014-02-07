@@ -27,6 +27,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.ess.EssentialsHook;
 
 /**
  * Executor for the /p command
@@ -81,7 +82,12 @@ public class PCommand extends BaseCommandExecutor {
                 return true;
             }
         }
-
+ 
+        if (EssentialsHook.isMuted(player)) {
+            plugin.sendMessage(player, "You cannot speak if you are muted!");
+            return true;
+        }
+        
         //CONDITIONS END
         StringBuilder builder = new StringBuilder();
         for (String word : args) {

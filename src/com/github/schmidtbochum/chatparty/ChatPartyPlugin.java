@@ -21,20 +21,16 @@
 package com.github.schmidtbochum.chatparty;
 
 import com.github.schmidtbochum.chatparty.Party.MemberType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
-
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
@@ -46,7 +42,9 @@ import uk.co.drnaylor.chatparty.commands.PartyAdminChatCommand;
 import uk.co.drnaylor.chatparty.commands.PartyAdminCommand;
 import uk.co.drnaylor.chatparty.commands.PartyCommand;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.ess.EssentialsHook;
 import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
+import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
 
 public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
 
@@ -99,6 +97,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     @Override
     public void onDisable() {
         //saveConfig();
+        EssentialsHook.ClearEssentials();
     }
 
     /**

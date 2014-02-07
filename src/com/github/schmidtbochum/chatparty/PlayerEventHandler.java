@@ -35,6 +35,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.ess.EssentialsHook;
 
 public class PlayerEventHandler implements Listener {
 
@@ -136,16 +137,35 @@ public class PlayerEventHandler implements Listener {
         boolean hasIgnore = player.hasMetadata(MetadataState.IGNORE.name());
 
         if (hasIgnore) {
+            if (EssentialsHook.isMuted(player)) {
+                plugin.sendMessage(player, "You cannot speak if you are muted!");
+                event.setCancelled(true);
+                return;
+            }
+                        
             player.removeMetadata(MetadataState.IGNORE.name(), plugin);
         } else if (player.hasMetadata(MetadataState.ADMINCHAT.name())) {
             plugin.getAdminChat().sendAdminMessage(player, event.getMessage());
             event.setCancelled(true);
             return;
-        } else if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {
+        } else if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {    
+            if (EssentialsHook.isMuted(player)) {
+                plugin.sendMessage(player, "You cannot speak if you are muted!");
+                event.setCancelled(true);
+                return;
+            }
+            
             plugin.getNSFWChat().sendNSFWMessage(player, event.getMessage());
             event.setCancelled(true);
             return;
         } else if (player.hasMetadata(MetadataState.PARTYCHAT.name()) && player.hasMetadata(MetadataState.INPARTY.name())) {
+            
+            if (EssentialsHook.isMuted(player)) {
+                plugin.sendMessage(player, "You cannot speak if you are muted!");
+                event.setCancelled(true);
+                return;
+            }
+            
             String message = event.getMessage();
 
             String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();

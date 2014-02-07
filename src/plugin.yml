@@ -2,7 +2,8 @@ name: ChatParty
 main: com.github.schmidtbochum.chatparty.ChatPartyPlugin
 version: 0.5.0-SNAPSHOT
 author: schmidtbochum
-authors: [dualspiral, JammyBand] # sneaky
+authors: [dualspiral, JammyBand]
+softdepend: [Essentials]
 description: >
              Party Chat Plugin
 commands:

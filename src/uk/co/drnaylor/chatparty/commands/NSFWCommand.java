@@ -26,6 +26,7 @@ import org.bukkit.entity.Player;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.ess.EssentialsHook;
 
 /**
  * A class that represents the /nsfw command.
@@ -80,6 +81,11 @@ public class NSFWCommand extends BaseCommandExecutor {
         if (player != null && !player.hasMetadata(MetadataState.NSFWLISTENING.name())) {
             // The player should be told they are not listening.
             plugin.sendMessage(player, "You cannot send a message to the NSFW channel if you are not listening to it!");
+            return;
+        }
+        
+        if (EssentialsHook.isMuted(player)) {
+            plugin.sendMessage(player, "You cannot speak if you are muted!");
             return;
         }
         
