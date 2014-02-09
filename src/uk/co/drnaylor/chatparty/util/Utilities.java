@@ -29,5 +29,4 @@ public final class Utilities {
         java.util.Collections.sort(list);
         return list;
     }
-
 }

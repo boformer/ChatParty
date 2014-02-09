@@ -3,6 +3,7 @@ package uk.co.drnaylor.chatparty.commands;
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
 import com.github.schmidtbochum.chatparty.Party;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -50,6 +51,31 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
             return null;
         }
         
-        return Utilities.asSortedList(new ArrayList<String>(plugin.getActiveParties().keySet()));
+        if (args[0] == null) {
+            return filterNames(null);
+        }
+        
+        return filterNames(args[0]);
+    }
+    
+    private List<String> filterNames(String request) {
+        List<String> list = Utilities.asSortedList(new ArrayList<String>(plugin.getActiveParties().keySet()));
+        
+        if (request == null || "".equals(request) || list.isEmpty()) {
+            return list;
+        }
+        
+        // Get the iterator
+        Iterator<String> it = list.iterator();
+        while (it.hasNext()) {
+            String n = it.next();
+            
+            // Remove anything that does not match
+            if (!n.toLowerCase().startsWith(request.toLowerCase())) {
+                it.remove();
+            }
+        }
+        
+        return list;
     }
 }
