@@ -35,6 +35,7 @@ import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
 import uk.co.drnaylor.chatparty.commands.ChatPartyAdminCommand;
+import uk.co.drnaylor.chatparty.commands.NSFWAdminCommand;
 import uk.co.drnaylor.chatparty.commands.NSFWCommand;
 import uk.co.drnaylor.chatparty.commands.NSFWListenCommand;
 import uk.co.drnaylor.chatparty.commands.PCommand;
@@ -88,6 +89,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         getCommand("partyadminchat").setExecutor(new PartyAdminChatCommand(this));
         getCommand("nsfw").setExecutor(new NSFWCommand(this));
         getCommand("nsfwlisten").setExecutor(new NSFWListenCommand(this));
+        getCommand("nsfwadmin").setExecutor(new NSFWAdminCommand(this));
         getCommand("chatparty").setExecutor(new ChatPartyAdminCommand(this));
     }
 

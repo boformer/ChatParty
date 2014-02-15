@@ -38,6 +38,9 @@ commands:
     description: Send an NSFW chat message
     aliases: [nsfwch, ncha]
     permission: chatparty.nsfw
+  nsfwadmin:
+    description: Performs admin commands on the NSFW channel.
+    permission: chatparty.admin    
   chatparty:
     description: Admin commands for ChatParty
     aliases: [cpa]

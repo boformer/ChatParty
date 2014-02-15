@@ -21,13 +21,14 @@
 
 package uk.co.drnaylor.chatparty.nsfw;
 
+import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Pattern;
-
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -142,16 +143,29 @@ public class NSFWChat {
         }
 
         String formattedMessage = plugin.getNSFWChatTemplate().replace("{DISPLAYNAME}", tag).replace("{MESSAGE}", message);
+        for (Player pla : getNSFWChannelPlayers()) {
+            pla.sendMessage(formattedMessage);
+        }
+        plugin.getServer().getConsoleSender().sendMessage(formattedMessage);
+    }
+    
+    /**
+     * Gets a list of players that are online and in the NSFW chat channel.
+     * @return The list of @link{Player}s in the chat channel.
+     */
+    public List<Player> getNSFWChannelPlayers() {
+        List<Player> players = new ArrayList<Player>();
         for (Player pla : Bukkit.getServer().getOnlinePlayers()) {
             if (pla.hasMetadata(MetadataState.NSFWLISTENING.name())) {
                 if (pla.hasPermission("chatparty.nsfw")) {
-                    pla.sendMessage(formattedMessage);
+                    players.add(pla);
                 } else {
                     plugin.toggleNSFWListening(pla);
                 }
             }
         }
-        plugin.getServer().getConsoleSender().sendMessage(formattedMessage);
+        
+        return players;
     }
     
     private void saveBannedWords() {
