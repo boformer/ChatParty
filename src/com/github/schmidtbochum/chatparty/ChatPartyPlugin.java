@@ -27,10 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import uk.co.drnaylor.charparty.party.PlayerParty;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.commands.ACommand;
 import uk.co.drnaylor.chatparty.commands.ChatCommand;
@@ -365,7 +367,26 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      * @param message The message to send.
      */
     @Override
+    @Deprecated
     public void sendSpyPartyMessage(Party party, String message) {
+        for (Player player : spyPlayers) {
+            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata(MetadataState.INPARTY.name()) || !party.getName().equalsIgnoreCase(player.getMetadata(MetadataState.INPARTY.name()).get(0).asString()))) {
+                player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
+            }
+        }
+        getLogger().log(Level.INFO, "[{0}] {1}", new Object[]{party.getShortName(), message});
+    }
+    
+    /**
+     * Handles the Party Spy message sending.
+     *
+     * This method will take messages to be sent to the spies and send them out
+     * with the correct formatting.
+     *
+     * @param party The party that sent the message.
+     * @param message The message to send.
+     */
+    public void sendSpyPartyMessage(PlayerParty party, String message) {
         for (Player player : spyPlayers) {
             if (player.hasPermission("chatparty.admin") && (!player.hasMetadata(MetadataState.INPARTY.name()) || !party.getName().equalsIgnoreCase(player.getMetadata(MetadataState.INPARTY.name()).get(0).asString()))) {
                 player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
@@ -438,6 +459,12 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
             playerSection.set(player.getName(), partyName);
         }
         saveConfig();
+    }
+    
+    public void savePlayer(OfflinePlayer player) {
+        ConfigurationSection playerSection = getConfig().getConfigurationSection("uuids");
+        
+        if ()
     }
 
     /**

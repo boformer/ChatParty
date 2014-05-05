@@ -22,9 +22,11 @@ package com.github.schmidtbochum.chatparty;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,10 +47,8 @@ public class Party {
 
     private final String name;
     private final String shortName;
-    private ArrayList<String> members;
-    private ArrayList<String> leaders;
-
-    public ArrayList<Player> activePlayers;
+    private Set<OfflinePlayer> members;
+    private Set<OfflinePlayer> leaders;
 
     public Party(String name, ChatPartyPlugin plugin) {
         this.plugin = plugin;
@@ -56,9 +56,30 @@ public class Party {
         this.name = name;
         this.shortName = name.substring(0, 3);
 
-        members = new ArrayList<String>();
-        leaders = new ArrayList<String>();
-        activePlayers = new ArrayList<Player>();
+        members = new HashSet<OfflinePlayer>();
+        leaders = new HashSet<OfflinePlayer>();
+    }
+    
+    /**
+     * Gets the players in the party that are currently online on the server.
+     * 
+     * @return A @link {Set} of @link {Player}s.
+     */
+    public Set<Player> getActivePlayers() {
+        HashSet<Player> players = new HashSet<Player>();
+        for (OfflinePlayer player : members) {
+            if (player.isOnline()) {
+                players.add(player.getPlayer());
+            }
+        }
+        
+        for (OfflinePlayer player : leaders) {
+            if (player.isOnline()) {
+                players.add(player.getPlayer());
+            }
+        }
+        
+        return players;
     }
 
     public String getName() {
@@ -69,6 +90,12 @@ public class Party {
         return shortName;
     }
     
+    /**
+     * Sends a message from a player to the party.
+     * 
+     * @param sender The sender of the message.
+     * @param message The message.
+     */
     public void sendPlayerMessage(Player sender, String message) {
         String playerName = "*Console*";
         if (sender != null) {
@@ -76,22 +103,19 @@ public class Party {
         }
         
         String formattedMessage = plugin.getPartyChatTemplate().replace("{DISPLAYNAME}", playerName).replace("{PARTYNAME}", this.name).replace("{MESSAGE}", message);
-        for (Player player : activePlayers) {
-            if (player.hasPermission("chatparty.user")) {
-                player.sendMessage(formattedMessage);
-            }
-        }
+        sendMessageToParty(formattedMessage);
         
         plugin.sendSpyChatMessage(this, sender, message);
     }
 
+    /**
+     * Sends a party message to the party.
+     * 
+     * @param message The message to send.
+     */
     public void sendPartyMessage(String message) {
         String msg = String.format("%s[Party] %s", plugin.getMessageColour(), message);
-        for (Player player : activePlayers) {
-            if (player.hasPermission("chatparty.user")) {
-                player.sendMessage(msg);
-            }
-        }
+        sendMessageToParty(msg);
     }
 
     /**
@@ -99,14 +123,19 @@ public class Party {
      *
      * @param player The player to add to the party.
      */
-    public void addPlayer(Player player) {
+    public void addPlayer(OfflinePlayer player) {
+        
+        // If the player is already in a party, remove them from that party.
+        if (player.hasMetadata(MetadataState.INPARTY.name())) {
+            plugin.getPlayerParty(player).removePlayer(player, true);
+        }
+        
         player.removeMetadata(MetadataState.PARTYINVITE.name(), plugin);
 
         sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " joined the party.");
         plugin.sendSpyPartyMessage(this, player.getName() + " joined the party.");
 
-        members.add(player.getName());
-        activePlayers.add(player);
+        members.add(player);
 
         player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, name));
 
@@ -118,39 +147,47 @@ public class Party {
     }
 
     public void removePlayer(String name) {
-        Player player = plugin.getServer().getPlayer(name);
-        if (player != null) {
-            removePlayer(player, false);
-        } else {
-            members.remove(name);
-            leaders.remove(name);
-        }
+        OfflinePlayer player = plugin.getServer().getOfflinePlayer(name);
+        removePlayer(player, false);
     }
 
     /**
      * Removes an online player from the party.
      *
-     * @param player The player to remove.
+     * @param player The @link {OfflinePlayer} to remove.
      * @param kicked Set to <code>true</code> if the player was kicked
      */
-    public void removePlayer(Player player, boolean kicked) {
-        player.removeMetadata(MetadataState.INPARTY.name(), plugin);
-        player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
+    public void removePlayer(OfflinePlayer player, boolean kicked) {
+        String playername = player.getName();
+        
+        // If the player is online, do these tasks.
+        if (player.isOnline()) {
+            Player p = player.getPlayer();
+            p.removeMetadata(MetadataState.INPARTY.name(), plugin);
+            p.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
+            playername = p.getDisplayName();
+        }
 
         if (!disbanding) {
-            leaders.remove(player.getName());
-            members.remove(player.getName());
-            activePlayers.remove(player);
+            leaders.remove(player);
+            members.remove(player);
         }
 
         if (kicked) {
-            sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " was kicked from the party.");
+            sendPartyMessage(playername + ChatColor.GREEN + " was kicked from the party.");
             plugin.sendSpyPartyMessage(this, player.getName() + " was kicked from the party.");
-            plugin.sendMessage(player, "You were kicked from the party \"" + name + "\".");
+            
+            if (player.isOnline()) {
+                plugin.sendMessage(player.getPlayer(), "You were kicked from the party \"" + name + "\".");
+            }
         } else {
-            sendPartyMessage(player.getDisplayName() + ChatColor.GREEN + " left the party.");
+            sendPartyMessage(playername + ChatColor.GREEN + " left the party.");
             plugin.sendSpyPartyMessage(this, player.getName() + " left the party.");
-            plugin.sendMessage(player, "You left the party \"" + name + "\".");
+            
+            if (player.isOnline()) {
+                plugin.sendMessage(player.getPlayer(), "You left the party \"" + name + "\".");
+            }
+            
         }
 
         plugin.savePlayer(player);
@@ -176,12 +213,12 @@ public class Party {
             return;
         }
 
-        if (leaders.contains(player.getName())) {
+        if (leaders.contains(player)) {
             plugin.sendMessage(leaderPlayer, "You can't kick party leaders.");
             return;
         }
 
-        if (!members.contains(player.getName())) {
+        if (!members.contains(player)) {
             plugin.sendMessage(leaderPlayer, "The player is not a member of your party.");
             return;
         }
@@ -333,6 +370,18 @@ public class Party {
     private static boolean validateName(String name) {
         Matcher m = ALPHANUMERIC.matcher(name);
         return m.matches();
+    }
+    
+    /**
+     * Handles sending messages to parties.
+     * @param message The formatted message to send.
+     */
+    private void sendMessageToParty(String message) {
+        for (Player player : getActivePlayers()) {
+            if (player.hasPermission("chatparty.user")) {
+                player.sendMessage(message);
+            }
+        }
     }
 
     public enum MemberType {
