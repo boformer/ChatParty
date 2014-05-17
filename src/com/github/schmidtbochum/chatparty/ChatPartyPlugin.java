@@ -201,6 +201,8 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public void getSpies() {
+        spyPlayers.clear();
+        
         List<String> UUIDlist = getConfig().getStringList("spy");
         for (String u : UUIDlist) {
             UUID uuid = UUID.fromString(u);
@@ -220,8 +222,14 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public void registerSpy(Player player) {
-        if (getConfig().getStringList("spy").contains(player.getName())) {
+        if (player.hasPermission("chatparty.nsfw") && !getConfig().getStringList("spy").contains(player.getUniqueId().toString())) {
+            List<String> st = getConfig().getStringList("spy");
+            st.add(player.getUniqueId().toString());
+            
+            getConfig().set("spy", st);
             spyPlayers.add(player);
+            
+            saveConfig();
         }
     }
 
@@ -232,9 +240,13 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public void unregisterSpy(OfflinePlayer player) {
-        getConfig().set("spy", getConfig().getStringList("spy").remove(player.getUniqueId().toString()));
+        List<String> u = getConfig().getStringList("spy");
+        u.remove(player.getUniqueId().toString());
         
+        getConfig().set("spy", u);
         spyPlayers.remove(player);
+        
+        saveConfig();
     }
 
     /**
@@ -249,12 +261,10 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         List<String> list = getConfig().getStringList("spy");
         boolean result;
         if (spyPlayers.contains(player)) {
-            spyPlayers.remove(player);
-            list.remove(player.getUniqueId().toString());
+            unregisterSpy(player);
             result = false;
         } else {
-            spyPlayers.add(player);
-            list.add(player.getUniqueId().toString());
+            registerSpy(player);
             result = true;
         }
         

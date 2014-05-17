@@ -288,7 +288,7 @@ public final class PlayerParty {
      * @return The party short name.
      */
     public String getShortName() {
-        return partyName.substring(0, 2);
+        return tag;
     }
     
     /**

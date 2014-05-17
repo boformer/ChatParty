@@ -78,6 +78,21 @@ public class PlayerEventHandler implements Listener {
                 player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
             }
         }
+        
+        // Config strings.
+        String chatChannel = plugin.getConfig().getString("lastPlayerChannel." + player.getUniqueId().toString());
+        if (chatChannel == null) {
+            return;
+        }
+        
+        // Restore chat channels.
+        if (chatChannel.equalsIgnoreCase("party") && player.hasMetadata(MetadataState.INPARTY.name())) {
+            player.setMetadata(MetadataState.PARTYCHAT.name(), new FixedMetadataValue(plugin, true));
+        } else if (chatChannel.equalsIgnoreCase("admin") && player.hasPermission("chatparty.admin") ) {
+            player.setMetadata(MetadataState.ADMINCHAT.name(), new FixedMetadataValue(plugin, true));
+        } else if (chatChannel.equalsIgnoreCase("nsfw") && player.hasPermission("chatparty.nsfw") ) {
+            player.setMetadata(MetadataState.NSFWCHAT.name(), new FixedMetadataValue(plugin, true));
+        }
     }
 
     /**
@@ -88,6 +103,16 @@ public class PlayerEventHandler implements Listener {
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
     void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
+        
+        // Save chat channel.
+        if (player.hasMetadata(MetadataState.PARTYCHAT.name())) {
+            plugin.getConfig().set("lastPlayerChannel." + player.getUniqueId().toString(), "party");
+        } else if (player.hasMetadata(MetadataState.ADMINCHAT.name())) {
+            plugin.getConfig().set("lastPlayerChannel." + player.getUniqueId().toString(), "admin");
+        } else if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {
+            plugin.getConfig().set("lastPlayerChannel." + player.getUniqueId().toString(), "nsfw");
+        }
+        
         if (player.hasMetadata(MetadataState.INPARTY.name())) {
             player.removeMetadata(MetadataState.INPARTY.name(), plugin);
             player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
