@@ -20,7 +20,6 @@
  */
 package com.github.schmidtbochum.chatparty;
 
-import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +34,9 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.enums.PlayerPartyRank;
 import uk.co.drnaylor.chatparty.ess.EssentialsHook;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 public class PlayerEventHandler implements Listener {
 
@@ -60,32 +61,23 @@ public class PlayerEventHandler implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        plugin.registerSpy(player);
-
-        // NSFW registration
         List<String> n = plugin.getConfig().getStringList("nsfwListeners");
-        if (n.contains(event.getPlayer().getName().toLowerCase())) {
+        if (n.contains(event.getPlayer().getUniqueId().toString())) {
             player.setMetadata(MetadataState.NSFWLISTENING.name(), new FixedMetadataValue(plugin, true));
             plugin.sendMessage(player, "You are listening to the NSFW channel.");
         }
         
-        // Party registration
-        Party party = plugin.getPlayerParty(player);
-
-        if (party == null) {
-            player.removeMetadata(MetadataState.INPARTY.name(), plugin);
-            return;
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+        if (party != null) {
+            player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, party.getName()));
+            
+            // Set whether they are a leader in the metadata.
+            if (party.getPlayerRank(player) == PlayerPartyRank.LEADER) {
+                player.setMetadata(MetadataState.PARTYLEADER.name(), new FixedMetadataValue(plugin, true));
+            } else {
+                player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
+            }
         }
-
-        player.setMetadata(MetadataState.INPARTY.name(), new FixedMetadataValue(plugin, party.getName()));
-
-        if (party.getMembers().get(MemberType.LEADER).contains(player.getName())) {
-            player.setMetadata(MetadataState.PARTYLEADER.name(), new FixedMetadataValue(plugin, true));
-        } else {
-            player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
-        }
-
-        party.activePlayers.add(player);
     }
 
     /**
@@ -97,32 +89,25 @@ public class PlayerEventHandler implements Listener {
     void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
         if (player.hasMetadata(MetadataState.INPARTY.name())) {
-            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-            Party party = plugin.loadParty(partyName);
-
-            party.activePlayers.remove(player);
-
             player.removeMetadata(MetadataState.INPARTY.name(), plugin);
             player.removeMetadata(MetadataState.PARTYLEADER.name(), plugin);
         }
 
         List<String> n = plugin.getConfig().getStringList("nsfwListeners");
         if (player.hasMetadata(MetadataState.NSFWLISTENING.name())) {
-            if (!n.contains(event.getPlayer().getName().toLowerCase())) {
-                n.add(event.getPlayer().getName().toLowerCase());
+            if (!n.contains(event.getPlayer().getUniqueId().toString())) {
+                n.add(event.getPlayer().getUniqueId().toString());
             }
             
             player.removeMetadata(MetadataState.NSFWLISTENING.name(), plugin);
         } else {
-            if (n.contains(event.getPlayer().getName().toLowerCase())) {
-                n.remove(event.getPlayer().getName().toLowerCase());
+            if (n.contains(event.getPlayer().getUniqueId().toString())) {
+                n.remove(event.getPlayer().getUniqueId().toString());
             }
         }
 
         plugin.getConfig().set("nsfwListeners", n);
         plugin.saveConfig();
-
-        plugin.unregisterSpy(player);
     }
 
     /**
@@ -160,6 +145,16 @@ public class PlayerEventHandler implements Listener {
             return;
         } else if (player.hasMetadata(MetadataState.PARTYCHAT.name()) && player.hasMetadata(MetadataState.INPARTY.name())) {
             
+            // The party
+            PlayerParty party = PlayerParty.getPlayerParty(player);
+            if (party == null) {
+                // The party doesn't exist any more, so let's remove the metadata.
+                player.removeMetadata(MetadataState.PARTYCHAT.name(), plugin);
+                player.removeMetadata(MetadataState.INPARTY.name(), plugin);
+                return;
+            }
+            
+            // If muted, honour that.
             if (EssentialsHook.isMuted(player)) {
                 plugin.sendMessage(player, "You cannot speak if you are muted!");
                 event.setCancelled(true);
@@ -167,10 +162,6 @@ public class PlayerEventHandler implements Listener {
             }
             
             String message = event.getMessage();
-
-            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-            Party party = plugin.loadParty(partyName);
-
             party.sendPlayerMessage(player, message);
 
             event.setCancelled(true);
