@@ -280,6 +280,9 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         PlayerParty.createPlayerParty(player, partyName, plugin);
+        
+        plugin.sendMessage(player, String.format("The party %s has been created.", partyName));
+        plugin.sendMessage(player, "To invite players to your party, type /party invite <playername>");
     }
 
     /**

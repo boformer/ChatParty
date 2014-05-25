@@ -148,7 +148,9 @@ public final class PlayerParty {
             tag = String.format("%s%s", name.substring(0, 3), count);
         }
         
-        return new PlayerParty(name, tag, player, plugin);
+        PlayerParty party = new PlayerParty(name, tag, player, plugin);
+        parties.add(party);
+        return party;
     }
     
     /**
