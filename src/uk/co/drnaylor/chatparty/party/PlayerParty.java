@@ -411,9 +411,13 @@ public final class PlayerParty {
         if (!members.containsKey(player)) {
             if (kicker != null) {
                 plugin.sendMessage(kicker, "The player " + player.getName() + " is not in your party.");
-            }
+            } 
             
             return false;
+        }
+        
+        if (kicker != null && !kicker.hasPermission("chatparty.admin") && members.get(player) == PlayerPartyRank.LEADER) {
+            plugin.sendMessage(kicker, "The player " + player.getName() + " is a leader and cannot be kicked.");
         }
         
         members.remove(player);
@@ -476,7 +480,7 @@ public final class PlayerParty {
             Player p = player.getPlayer();
             
             if (reason.equals(PlayerRemoveReason.KICKED_BY_LEADER)) {
-                plugin.sendMessage(p, String.format(reason.getAdminMessageTemplate(), kicker.getName()));
+                plugin.sendMessage(p, String.format(reason.getPlayerMessageTemplate(), kicker.getName()));
             } else {    
                 plugin.sendMessage(p, reason.getPlayerMessageTemplate());
             }
