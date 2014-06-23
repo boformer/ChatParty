@@ -21,7 +21,6 @@
 
 package uk.co.drnaylor.chatparty.nsfw;
 
-import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;

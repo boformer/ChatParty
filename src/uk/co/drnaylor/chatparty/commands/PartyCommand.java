@@ -18,14 +18,10 @@
  You should have received a copy of the GNU General Public License
  along with ChatParty.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 package uk.co.drnaylor.chatparty.commands;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
-import com.github.schmidtbochum.chatparty.Party;
-import com.github.schmidtbochum.chatparty.Party.MemberType;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -33,6 +29,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
+import uk.co.drnaylor.chatparty.enums.PlayerPartyRank;
+import uk.co.drnaylor.chatparty.enums.PlayerRemoveReason;
+import uk.co.drnaylor.chatparty.exceptions.ChatPartyException;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 public class PartyCommand extends BaseCommandExecutor {
 
@@ -51,57 +51,65 @@ public class PartyCommand extends BaseCommandExecutor {
      */
     @Override
     public boolean onCommand(CommandSender cs, Command cmnd, String string, String[] args) {
-        Player player = this.getPlayerFromSender(cs);
-        if (player == null) {
-            return false;
-        }
+        try {
+            Player player = this.getPlayerFromSender(cs);
+            if (player == null) {
+                return false;
+            }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("join")) {
-            joinSubcommand(player);
-            return true;
-        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("join")) {
+                joinSubcommand(player);
+                return true;
+            }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("leave")) {
-            leaveSubcommand(player);
-            return true;
-        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("leave")) {
+                leaveSubcommand(player);
+                return true;
+            }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("members")) {
-            membersSubcommand(player);
-            return true;
-        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("members")) {
+                membersSubcommand(player);
+                return true;
+            }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("spy")) {
-            spySubcommand(player);
-            return true;
-        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("spy")) {
+                spySubcommand(player);
+                return true;
+            }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("toggle")) {
-            toggleSubcommand(player);
-            return true;
-        }
-        
-        if (args.length == 2 && args[0].equalsIgnoreCase("invite")) {
-            inviteSubcommand(player, args[1]);
-            return true;
-        }
+            if (args.length == 1 && args[0].equalsIgnoreCase("toggle")) {
+                toggleSubcommand(player);
+                return true;
+            }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
-            createSubcommand(player, args[1]);
-            return true;
-        }
+            if (args.length == 2 && args[0].equalsIgnoreCase("invite")) {
+                inviteSubcommand(player, args[1]);
+                return true;
+            }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("leader")) {
-            leaderSubcommand(player, args[1]);
-            return true;
-        }
+            if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
+                createSubcommand(player, args[1]);
+                return true;
+            }
 
-        if (args.length == 2 && args[0].equalsIgnoreCase("kick")) {
-            kickSubcommand(player, args[1]);
-            return true;
-        }
+            if (args.length == 2 && args[0].equalsIgnoreCase("leader")) {
+                leaderSubcommand(player, args[1]);
+                return true;
+            }
 
-        helpSubcommand(player);
+            if (args.length == 2 && args[0].equalsIgnoreCase("kick")) {
+                kickSubcommand(player, args[1]);
+                return true;
+            }
+
+            helpSubcommand(player);
+        } catch (ChatPartyException ex) {
+            if (cs instanceof Player) {
+                plugin.sendMessage((Player) cs, ex.getMessage());
+            } else {
+                cs.sendMessage(ex.getMessage());
+            }
+        }
         return true;
     }
 
@@ -116,12 +124,14 @@ public class PartyCommand extends BaseCommandExecutor {
 
         plugin.sendMessage(player, "/chat" + ChatColor.WHITE + ": Toggle the public chat.");
 
-        if (player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+        
+        if (party != null) {
             plugin.sendMessage(player, "/p <message>" + ChatColor.WHITE + ": Send a message to your party");
             plugin.sendMessage(player, "/party leave" + ChatColor.WHITE + ": Leave your party");
             plugin.sendMessage(player, "/party members" + ChatColor.WHITE + ": Show the member list");
             plugin.sendMessage(player, "/party toggle" + ChatColor.WHITE + ": Toggle the party chat");
-            if (player.hasMetadata(MetadataState.PARTYLEADER.name()) && player.hasPermission("chatparty.leader")) {
+            if (party.getPlayerRank(player) == PlayerPartyRank.LEADER && player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "/party invite <player>" + ChatColor.WHITE + ": Invite a player to your party");
                 plugin.sendMessage(player, "/party kick <player>" + ChatColor.WHITE + ": Kick a player from your party");
                 //sendMessage(player, "/party name <name>" + ChatColor.WHITE + ": Rename your party.");
@@ -149,8 +159,9 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
+        // Get the party of the name in the Metadata.
         String partyName = player.getMetadata(MetadataState.PARTYINVITE.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
+        PlayerParty party = PlayerParty.getPartyFromName(partyName);
 
         if (party == null) {
             noInvitation(player);
@@ -167,18 +178,19 @@ public class PartyCommand extends BaseCommandExecutor {
      * @param player The player that is leaving their party.
      */
     private void leaveSubcommand(Player player) {
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
             }
+
             return;
         }
 
         //CONDITIONS END
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
-        party.removePlayer(player, false);
+        party.removePlayer(player, null, PlayerRemoveReason.LEFT);
     }
 
     /**
@@ -194,15 +206,18 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
             }
+
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.PARTYLEADER.name())) {
+        if (party.getPlayerRank(player) != PlayerPartyRank.LEADER) {
             plugin.sendMessage(player, "Only party leaders can invite other players.");
             return;
         }
@@ -219,13 +234,11 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (invitedPlayer.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty otherParty = PlayerParty.getPlayerParty(invitedPlayer);
+        if (otherParty != null) {
             plugin.sendMessage(player, "The player is already in a party.");
             return;
         }
-
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
 
         invitedPlayer.setMetadata(MetadataState.PARTYINVITE.name(), new FixedMetadataValue(plugin, party.getName()));
 
@@ -241,32 +254,35 @@ public class PartyCommand extends BaseCommandExecutor {
      * @param player The player that created the party.
      * @param partyName The name of the party.
      */
-    private void createSubcommand(Player player, String partyName) {
+    private void createSubcommand(Player player, String partyName) throws ChatPartyException {
         if (!player.hasPermission("chatparty.leader")) {
             plugin.sendMessage(player, "You do not have access to that command.");
             return;
         }
 
-        if (player.hasMetadata(MetadataState.INPARTY.name())) {
+        if (PlayerParty.getPlayerParty(player) != null) {
             plugin.sendMessage(player, "You are already in a party.");
             return;
         }
-        
+
         if (partyName.length() > 15) {
-            plugin.sendMessage(player, "This name is too long! (3-15 letters)");
+            plugin.sendMessage(player, "This name is too long! (4-15 letters)");
             return;
         }
-        if (partyName.length() < 3) {
-            plugin.sendMessage(player, "This name is too short! (3-15 letters)");
+        if (partyName.length() < 4) {
+            plugin.sendMessage(player, "This name is too short! (4-15 letters)");
             return;
         }
 
-        if (plugin.loadParty(partyName) != null) {
+        if (PlayerParty.getPartyFromName(partyName) != null) {
             plugin.sendMessage(player, "The party \"" + partyName + "\" already exists. Please choose a different name.");
             return;
         }
 
-        Party.create(player, partyName, plugin);
+        PlayerParty.createPlayerParty(player, partyName, plugin);
+        
+        plugin.sendMessage(player, String.format("The party %s has been created.", partyName));
+        plugin.sendMessage(player, "To invite players to your party, type /party invite <playername>");
     }
 
     /**
@@ -275,13 +291,15 @@ public class PartyCommand extends BaseCommandExecutor {
      * @param player The player who is promoting another player.
      * @param toPromote The name of the player to promote.
      */
-    private void leaderSubcommand(Player player, String toPromote) {
+    private void leaderSubcommand(Player player, String toPromote) throws ChatPartyException {
         if (!player.hasPermission("chatparty.leader")) {
             plugin.sendMessage(player, "You do not have access to that command.");
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -289,30 +307,28 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.PARTYLEADER.name())) {
+        if (party.getPlayerRank(player) != PlayerPartyRank.LEADER) {
             plugin.sendMessage(player, "Only party leaders can promote other players.");
             return;
         }
 
         OfflinePlayer promotedPlayer = plugin.getServer().getOfflinePlayer(toPromote);
+        if (!promotedPlayer.hasPlayedBefore()) {
+            plugin.sendMessage(player, "The player has never played on this server!");
+            return;
+        }
 
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
-
-        Map<MemberType, List<String>> members = party.getMembers();
-        
-        if (members.get(MemberType.LEADER).contains(promotedPlayer.getName())) {
+        PlayerPartyRank rank = party.getPlayerRank(promotedPlayer);
+        if (rank == null) {
+            plugin.sendMessage(player, "The player is not a member of your party.");
+            return;
+        } else if (rank == PlayerPartyRank.MEMBER) {
             plugin.sendMessage(player, "The player is already a leader.");
             return;
         }
 
-        if (!members.get(MemberType.MEMBER).contains(promotedPlayer.getName())) {
-            plugin.sendMessage(player, "The player is not a member of your party.");
-            return;
-        }
-
         //CONDITIONS END
-        party.addLeader(promotedPlayer);
+        party.setPlayerRank(promotedPlayer, PlayerPartyRank.LEADER);
     }
 
     private void kickSubcommand(Player player, String playerName) {
@@ -321,7 +337,9 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -329,10 +347,17 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        OfflinePlayer kickedPlayer = plugin.getServer().getOfflinePlayer(playerName);
+        if (party.getPlayerRank(player) != PlayerPartyRank.LEADER) {
+            plugin.sendMessage(player, "You must be the leader of the party to kick players.");
+            return;
+        }
 
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        plugin.loadParty(partyName).kickPlayer(player, kickedPlayer);
+        OfflinePlayer kickedPlayer = plugin.getServer().getOfflinePlayer(playerName);
+        if (!party.getPlayers().contains(kickedPlayer)) {
+            plugin.sendMessage(player, "That player is not in your party.");
+        }
+
+        party.removePlayer(kickedPlayer, player, PlayerRemoveReason.KICKED_BY_LEADER);
     }
 
     private void membersSubcommand(Player player) {
@@ -341,7 +366,9 @@ public class PartyCommand extends BaseCommandExecutor {
             return;
         }
 
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -350,36 +377,35 @@ public class PartyCommand extends BaseCommandExecutor {
         }
 
         //CONDITIONS END
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
-
-        Map<MemberType, List<String>> mems = party.getMembers();
-
         String sep = ", ";
 
+        Set<OfflinePlayer> leaders = party.getPlayers(PlayerPartyRank.LEADER);
+        Set<OfflinePlayer> members = party.getPlayers(PlayerPartyRank.MEMBER);
+
         StringBuilder builder = new StringBuilder();
-        for (String name : mems.get(MemberType.LEADER)) {
+        for (OfflinePlayer p : leaders) {
             if (builder.length() > 0) {
                 builder.append(sep);
             }
-            builder.append(name);
+
+            builder.append(p.getName());
         }
 
-        String leaders = builder.toString();
+        String l = builder.toString();
 
         builder = new StringBuilder();
-        for (String name : mems.get(MemberType.MEMBER)) {
+        for (OfflinePlayer p : members) {
             if (builder.length() > 0) {
                 builder.append(sep);
             }
-            builder.append(name);
+            builder.append(p.getName());
         }
 
-        String members = builder.toString();
-        
+        String m = builder.toString();
+
         plugin.sendMessage(player, "Member List of the party \"" + party.getName() + "\":");
-        plugin.sendMessage(player, "Leaders (" + mems.get(MemberType.LEADER).size() + "): " + leaders);
-        plugin.sendMessage(player, "Members (" + mems.get(MemberType.MEMBER).size() + "): " + members);
+        plugin.sendMessage(player, "Leaders (" + leaders.size() + "): " + l);
+        plugin.sendMessage(player, "Members (" + members.size() + "): " + m);
     }
 
     private void toggleSubcommand(Player player) {

@@ -10,8 +10,14 @@ adminChatFormat: '&b[A] &r{DISPLAYNAME}&b: {MESSAGE}'
 NSFWChatFormat: '&4[NSFW] &r{DISPLAYNAME}&f: {MESSAGE}'
 invertP: false
 toggleWithP: true
-players: {}
+
+lastPlayerChannel: {}
+# lastPlayerChannel.UUID: party,admin,nsfw,global
+
 parties: {}
+# parties.partyname.tag: tag
+# parties.partyname.players.UUID: member,leader
+
 spy: []
 
 censorGlobalChat: true

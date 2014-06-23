@@ -1,7 +1,7 @@
 /*
  ChatParty Plugin for Minecraft Bukkit Servers
  This file: Copyright (C) 2014 Dr Daniel Naylor
-
+    
  This file is part of ChatParty.
 
  ChatParty is free software: you can redistribute it and/or modify
@@ -17,29 +17,22 @@
  You should have received a copy of the GNU General Public License
  along with ChatParty.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 package uk.co.drnaylor.chatparty.interfaces;
 
-import com.github.schmidtbochum.chatparty.Party;
-import java.util.Map;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
-import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
+import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 /**
- *
- * @author Daniel
+ * An interface that represents the contract for the plugin. 
  */
 public interface IChatPartyPlugin {
-
-    /**
-     * Gets the active parties.
-     *
-     * @return The active parties.
-     */
-    Map<String, Party> getActiveParties();
 
     /**
      * Gets the admin chat class.
@@ -93,12 +86,9 @@ public interface IChatPartyPlugin {
     String getPartyChatTemplate();
 
     /**
-     * Gets the party a player belongs to.
-     *
-     * @param player The player.
-     * @return The party that player is part of, or null if not in a party.
+     * Gets the spies from the config list.
      */
-    Party getPlayerParty(Player player);
+    void getSpies();
 
     /**
      * Gets whether to toggle with p.
@@ -109,14 +99,14 @@ public interface IChatPartyPlugin {
     boolean getToggleWithP();
 
     /**
-     * Gets a party based on it's name.
-     *
-     * @param name The name of the party.
-     * @return The party object.
-     *
-     * @see Party
+     * Runs when the plugin is disabled.
      */
-    Party loadParty(String name);
+    void onDisable();
+
+    /**
+     * Runs when the plugin is being enabled on the server.
+     */
+    void onEnable();
 
     /**
      * Registers a player as a spy.
@@ -140,11 +130,11 @@ public interface IChatPartyPlugin {
     void removePlayer(String playerName);
 
     /**
-     * Saves a party.
+     * Saves the config file.
      *
-     * @param party The party to save the data for.
+     * This method overrides standard Bukkit behaviour.
      */
-    void saveParty(Party party);
+    void saveConfig();
 
     /**
      * Saves a player's data.
@@ -168,10 +158,10 @@ public interface IChatPartyPlugin {
      * out with the correct formatting.
      *
      * @param party The party that sent the message.
-     * @param sender The player that sent the message.
+     * @param sender The player that sent the message, or null if console.
      * @param message The message to send.
      */
-    void sendSpyChatMessage(Party party, Player sender, String message);
+    void sendSpyChatMessage(PlayerParty party, Player sender, String message);
 
     /**
      * Handles the Party Spy message sending.
@@ -182,7 +172,7 @@ public interface IChatPartyPlugin {
      * @param party The party that sent the message.
      * @param message The message to send.
      */
-    void sendSpyPartyMessage(Party party, String message);
+    void sendSpyPartyMessage(PlayerParty party, String message);
 
     /**
      * Toggles a user's admin chat status.
@@ -238,16 +228,19 @@ public interface IChatPartyPlugin {
      *
      * @param player The player to remove from the spy list.
      */
-    void unregisterSpy(Player player);
+    void unregisterSpy(OfflinePlayer player);
     
     /**
-     * Returns the Bukkit server object.
+     * Gets the Bukkit server.
      * 
-     * @return The server.
+     * @return The server
      */
     Server getServer();
-
-    public void saveConfig();
-
-    public FileConfiguration getConfig();
+    
+    /**
+     * Gets the configuration file for the plugin.
+     * 
+     * @return The FileConfiguration object.
+     */
+    FileConfiguration getConfig();
 }

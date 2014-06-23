@@ -21,13 +21,13 @@
 package uk.co.drnaylor.chatparty.commands;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
-import com.github.schmidtbochum.chatparty.Party;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import uk.co.drnaylor.chatparty.enums.MetadataState;
 import uk.co.drnaylor.chatparty.ess.EssentialsHook;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 /**
  * Executor for the /p command
@@ -50,6 +50,8 @@ public class PCommand extends BaseCommandExecutor {
             return false;
         }
 
+        PlayerParty party = PlayerParty.getPlayerParty(player);
+        
         // Start the conditions. Does the player have the right permissions?
         if (!player.hasPermission("chatparty.user")) {
             plugin.sendMessage(player, "You do not have access to that command.");
@@ -57,7 +59,7 @@ public class PCommand extends BaseCommandExecutor {
         }
         
         // Is the player in a party?
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
+        if (party == null) {
             plugin.sendMessage(player, "You are not in a party.");
             if (player.hasPermission("chatparty.leader")) {
                 plugin.sendMessage(player, "Create your own party with /party create <name>.");
@@ -109,9 +111,6 @@ public class PCommand extends BaseCommandExecutor {
                 return true;
             }
         }
-
-        String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-        Party party = plugin.loadParty(partyName);
 
         party.sendPlayerMessage(player, message);
         return true;

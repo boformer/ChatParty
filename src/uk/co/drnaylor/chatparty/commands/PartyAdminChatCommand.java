@@ -1,14 +1,14 @@
 package uk.co.drnaylor.chatparty.commands;
 
 import com.github.schmidtbochum.chatparty.ChatPartyPlugin;
-import com.github.schmidtbochum.chatparty.Party;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.entity.Player;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 import uk.co.drnaylor.chatparty.util.Utilities;
 
 
@@ -25,7 +25,7 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
             return true;
         }
         
-        Party party = plugin.loadParty(args[0]);
+        PlayerParty party = PlayerParty.getPartyFromName(args[0]);
         
         if (party == null) {
             // Party does not exist.
@@ -59,7 +59,13 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
     }
     
     private List<String> filterNames(String request) {
-        List<String> list = Utilities.asSortedList(new ArrayList<String>(plugin.getActiveParties().keySet()));
+        Set<PlayerParty> parties = PlayerParty.getParties();
+        ArrayList<String> partyNames = new ArrayList<String>();
+        for (PlayerParty p : parties) {
+            partyNames.add(p.getName());
+        }
+        
+        List<String> list = Utilities.asSortedList(partyNames);
         
         if (request == null || "".equals(request) || list.isEmpty()) {
             return list;
@@ -70,7 +76,7 @@ public class PartyAdminChatCommand extends BaseCommandExecutor implements TabCom
         while (it.hasNext()) {
             String n = it.next();
             
-            // Remove anything that does not match
+            // Remove anything that does not match. Case insensitive.
             if (!n.toLowerCase().startsWith(request.toLowerCase())) {
                 it.remove();
             }

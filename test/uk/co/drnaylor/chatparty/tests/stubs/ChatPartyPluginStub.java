@@ -20,15 +20,16 @@
 
 package uk.co.drnaylor.chatparty.tests.stubs;
 
-import com.github.schmidtbochum.chatparty.Party;
 import java.util.Map;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Server;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
 import uk.co.drnaylor.chatparty.admin.AdminChat;
 import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 public class ChatPartyPluginStub implements IChatPartyPlugin {
     
@@ -36,11 +37,6 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     
     public ChatPartyPluginStub() {
         server = new ServerStub();
-    }
-    
-    @Override
-    public Map<String, Party> getActiveParties() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
@@ -79,20 +75,10 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     }
 
     @Override
-    public Party getPlayerParty(Player player) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public boolean getToggleWithP() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-
-    @Override
-    public Party loadParty(String name) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
+    
     @Override
     public void registerSpy(Player player) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -109,27 +95,12 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     }
 
     @Override
-    public void saveParty(Party party) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
     public void savePlayer(Player player) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void sendMessage(Player player, String message) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void sendSpyChatMessage(Party party, Player sender, String message) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-    }
-
-    @Override
-    public void sendSpyPartyMessage(Party party, String message) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -164,17 +135,42 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     }
 
     @Override
-    public void unregisterSpy(Player player) {
+    public void saveConfig() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void getSpies() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onDisable() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void onEnable() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void sendSpyChatMessage(PlayerParty party, Player sender, String message) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void sendSpyPartyMessage(PlayerParty party, String message) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void unregisterSpy(OfflinePlayer player) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public Server getServer() {
-        return server;
-    }
-
-    @Override
-    public void saveConfig() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
@@ -182,5 +178,4 @@ public class ChatPartyPluginStub implements IChatPartyPlugin {
     public FileConfiguration getConfig() {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
-    
 }

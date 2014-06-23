@@ -20,13 +20,12 @@
  */
 package com.github.schmidtbochum.chatparty;
 
-import com.github.schmidtbochum.chatparty.Party.MemberType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import org.bukkit.ChatColor;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
@@ -46,11 +45,11 @@ import uk.co.drnaylor.chatparty.enums.MetadataState;
 import uk.co.drnaylor.chatparty.ess.EssentialsHook;
 import uk.co.drnaylor.chatparty.interfaces.IChatPartyPlugin;
 import uk.co.drnaylor.chatparty.nsfw.NSFWChat;
+import uk.co.drnaylor.chatparty.party.PlayerParty;
 
 public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
 
-    private HashMap<String, Party> activeParties;
-    private ArrayList<Player> spyPlayers;
+    private ArrayList<OfflinePlayer> spyPlayers;
     private boolean config_invertP;
     private boolean config_toggleWithP;
     private AdminChat adminChat;
@@ -66,8 +65,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
        
-        activeParties = new HashMap<String, Party>();
-        spyPlayers = new ArrayList<Player>();
+        spyPlayers = new ArrayList<OfflinePlayer>();
 
         for (Player player : getServer().getOnlinePlayers()) {
             registerSpy(player);
@@ -101,6 +99,17 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         //saveConfig();
         EssentialsHook.ClearEssentials();
     }
+    
+    /**
+     * Saves the config file.
+     * 
+     * This method overrides standard Bukkit behaviour.
+     */
+    @Override
+    public void saveConfig() {
+        PlayerParty.saveConfigToFile(this);
+        super.saveConfig();
+    }
 
     /**
      * Reloads the config file, and sets up the banned word list.
@@ -117,11 +126,12 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         if (config_messageColor == null) {
             config_messageColor = ChatColor.WHITE;
         }
-
         
         if (this.getNSFWChat() != null) {
             this.getNSFWChat().setupFilter(this.getConfig().getStringList("nsfwWordFilter"));
         }
+        
+        PlayerParty.reloadPartiesFromConfig(this);
     }
     
     /**
@@ -187,35 +197,24 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     }
 
     /**
-     * Saves a party.
-     *
-     * @param party The party to save the data for.
+     * Gets the spies from the config list.
      */
     @Override
-    public void saveParty(Party party) {
-        ConfigurationSection partySection = getConfig().getConfigurationSection("parties").createSection(party.getName());
-        partySection.set("leaders", party.getMembers().get(MemberType.LEADER));
-        partySection.set("members", party.getMembers().get(MemberType.MEMBER));
-        saveConfig();
-        reloadConfig();
-    }
-
-    /**
-     * Gets the party a player belongs to.
-     *
-     * @param player The player.
-     * @return The party that player is part of, or null if not in a party.
-     */
-    @Override
-    public Party getPlayerParty(Player player) {
-        String partyName = getConfig().getConfigurationSection("players").getString(player.getName());
-        if (partyName != null) {
-            return loadParty(partyName);
-        } else {
-            return null;
+    public void getSpies() {
+        spyPlayers.clear();
+        
+        List<String> UUIDlist = getConfig().getStringList("spy");
+        for (String u : UUIDlist) {
+            UUID uuid = UUID.fromString(u);
+            OfflinePlayer player = getServer().getOfflinePlayer(uuid);
+            
+            if (player.hasPlayedBefore()) {
+                spyPlayers.add(player);
+            }
         }
+        
     }
-
+    
     /**
      * Registers a player as a spy.
      *
@@ -223,8 +222,14 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      */
     @Override
     public void registerSpy(Player player) {
-        if (getConfig().getStringList("spy").contains(player.getName())) {
+        if (player.hasPermission("chatparty.nsfw") && !getConfig().getStringList("spy").contains(player.getUniqueId().toString())) {
+            List<String> st = getConfig().getStringList("spy");
+            st.add(player.getUniqueId().toString());
+            
+            getConfig().set("spy", st);
             spyPlayers.add(player);
+            
+            saveConfig();
         }
     }
 
@@ -234,8 +239,14 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      * @param player The player to remove from the spy list.
      */
     @Override
-    public void unregisterSpy(Player player) {
+    public void unregisterSpy(OfflinePlayer player) {
+        List<String> u = getConfig().getStringList("spy");
+        u.remove(player.getUniqueId().toString());
+        
+        getConfig().set("spy", u);
         spyPlayers.remove(player);
+        
+        saveConfig();
     }
 
     /**
@@ -250,14 +261,13 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         List<String> list = getConfig().getStringList("spy");
         boolean result;
         if (spyPlayers.contains(player)) {
-            spyPlayers.remove(player);
-            list.remove(player.getName());
+            unregisterSpy(player);
             result = false;
         } else {
-            spyPlayers.add(player);
-            list.add(player.getName());
+            registerSpy(player);
             result = true;
         }
+        
         getConfig().set("spy", list);
         saveConfig();
         return result;
@@ -354,7 +364,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
             return true;
         }
     }
-
+    
     /**
      * Handles the Party Spy message sending.
      *
@@ -365,10 +375,23 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      * @param message The message to send.
      */
     @Override
-    public void sendSpyPartyMessage(Party party, String message) {
-        for (Player player : spyPlayers) {
-            if (player.hasPermission("chatparty.admin") && (!player.hasMetadata(MetadataState.INPARTY.name()) || !party.getName().equalsIgnoreCase(player.getMetadata(MetadataState.INPARTY.name()).get(0).asString()))) {
-                player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
+    public void sendSpyPartyMessage(PlayerParty party, String message) {
+        for (OfflinePlayer op : spyPlayers) {
+            Player player;
+            
+            // If the player is not online, continue.
+            if (!op.isOnline()) {
+                continue;
+            }
+            
+            player = op.getPlayer();
+            if (player.hasPermission("chatparty.admin")) {
+                if (!player.hasMetadata(MetadataState.INPARTY.name()) || !party.getName().equalsIgnoreCase(player.getMetadata(MetadataState.INPARTY.name()).get(0).asString())) {
+                    player.sendMessage(ChatColor.GRAY + "[" + party.getShortName() + "] " + message);
+                }
+            } else {
+                // Remove them from the list.
+                unregisterSpy(op);
             }
         }
         getLogger().log(Level.INFO, "[{0}] {1}", new Object[]{party.getShortName(), message});
@@ -385,7 +408,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
      * @param message The message to send.
      */
     @Override
-    public void sendSpyChatMessage(Party party, Player sender, String message) {
+    public void sendSpyChatMessage(PlayerParty party, Player sender, String message) {
         String name = "*Console*";
         if (sender != null) {
             name = sender.getName();
@@ -393,35 +416,7 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
         
         sendSpyPartyMessage(party, name + ": " + message);
     }
-
-    /**
-     * Gets a party based on it's name.
-     *
-     * @param name The name of the party.
-     * @return The party object.
-     *
-     * @see Party
-     */
-    @Override
-    public Party loadParty(String name) {
-        Party party = activeParties.get(name);
-
-        if (party == null) {
-            party = Party.loadParty(name, this);
-        }
-
-        return party;
-    }
-
-    /**
-     * Removes a party from the list.
-     *
-     * @param party The party to remove.
-     */
-    void removeActiveParty(Party party) {
-        activeParties.remove(party.getName());
-    }
-
+    
     /**
      * Saves a player's data.
      *
@@ -431,15 +426,19 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     public void savePlayer(Player player) {
         ConfigurationSection playerSection = getConfig().getConfigurationSection("players");
 
-        if (!player.hasMetadata(MetadataState.INPARTY.name())) {
-            playerSection.set(player.getName(), null);
+        if (player.hasMetadata(MetadataState.PARTYCHAT.name())) {
+            playerSection.set(player.getUniqueId().toString(), "party");
+        } else if (player.hasMetadata(MetadataState.ADMINCHAT.name())) {
+            playerSection.set(player.getUniqueId().toString(), "admin");
+        } else if (player.hasMetadata(MetadataState.NSFWCHAT.name())) {
+            playerSection.set(player.getUniqueId().toString(), "nsfw");
         } else {
-            String partyName = player.getMetadata(MetadataState.INPARTY.name()).get(0).asString();
-            playerSection.set(player.getName(), partyName);
+            playerSection.set(player.getUniqueId().toString(), "chat");
         }
+        
         saveConfig();
     }
-
+    
     /**
      * Removes a player from the system.
      *
@@ -482,15 +481,5 @@ public class ChatPartyPlugin extends JavaPlugin implements IChatPartyPlugin {
     @Override
     public boolean getInvertP() {
         return this.config_invertP;
-    }
-
-    /**
-     * Gets the active parties.
-     *
-     * @return The active parties.
-     */
-    @Override
-    public Map<String, Party> getActiveParties() {
-        return activeParties;
     }
 }
