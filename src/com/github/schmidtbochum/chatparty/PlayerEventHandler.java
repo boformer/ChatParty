@@ -24,11 +24,14 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import org.bukkit.ChatColor;
-
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -221,5 +224,54 @@ public class PlayerEventHandler implements Listener {
             }
         }
 
+    }
+    
+    /**
+     * Fires when a block is placed.
+     * 
+     * @param event The event.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    void onPlayerBlockPlace(BlockPlaceEvent event) {
+        
+        if (!(event.getBlock().getState() instanceof Sign)) {
+            return;
+        }
+        
+        Sign s = (Sign)event.getBlock().getState();
+        checkLines(s.getLines(), event, event.getPlayer());
+    }
+    
+    /**
+     * Fires when a sign is changed.
+     * 
+     * @param event The event.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    void onPlayerSignChange(SignChangeEvent event) {
+        checkLines(event.getLines(), event, event.getPlayer());
+    }
+    
+    /**
+     * Checks the lines on the signs for censored words, and cancels the event, if required.
+     * 
+     * @param lines The lines to check.
+     * @param event The cancellable event.
+     * @param player The player performing the action.
+     */
+    private void checkLines(String[] lines, Cancellable event, Player player) {
+      
+        // Check each line for a banned word.
+        for (String s : lines) {
+            if (plugin.getNSFWChat().containsBannedWord(s)) {
+                // Cancel event, notify player.
+                event.setCancelled(true);
+                if (player != null) {
+                    player.sendMessage(ChatColor.RED + "You cannot use NSFW words on a sign.");
+                }
+                
+                return;
+            }
+        }
     }
 }
