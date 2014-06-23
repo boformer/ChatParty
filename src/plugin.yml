@@ -1,6 +1,9 @@
 name: ChatParty
 main: com.github.schmidtbochum.chatparty.ChatPartyPlugin
-version: 0.3.0
+version: 0.5.0-SNAPSHOT
+author: schmidtbochum
+authors: [dualspiral, JammyBand]
+softdepend: [Essentials]
 description: >
              Party Chat Plugin
 commands:
@@ -16,9 +19,38 @@ commands:
     description: Toggle the global chat.
     permission: chatparty.user
     usage: "Command Help: /party help"
+  a:
+    decription: Toggle the admin chat.
+    permission: chatparty.adminchat
+  partyadmin:
+    decription: Party admin commands.
+    permission: chatparty.admin
+    aliases: [pa]
+  partyadminchat:
+    decription: Party admin chat.
+    permission: chatparty.admin
+    aliases: [pc, pac]
+  nsfwlisten:
+    description: Toggle the NSFW chat
+    aliases: [nsfwtog, ntog]
+    permission: chatparty.nsfw
+  nsfw:
+    description: Send an NSFW chat message
+    aliases: [nsfwch, ncha]
+    permission: chatparty.nsfw
+  nsfwadmin:
+    description: Performs admin commands on the NSFW channel.
+    permission: chatparty.admin    
+  chatparty:
+    description: Admin commands for ChatParty
+    aliases: [cpa]
+    permission: chatparty.admin
 permissions:
     chatparty.user:
         description: Enter parties and chat
+        default: op
+    chatparty.nsfw:
+        description: Access NSFW commands
         default: op
     chatparty.leader:
         description: Create parties and invite players
@@ -26,9 +58,10 @@ permissions:
         children:
         - chatparty.user
     chatparty.admin:
-        description: Ability to see all party chats (SocialSpy)
+        description: Ability to see all party chats (SocialSpy) and use admin commands
         default: op
         children:
         - chatparty.leader
-        
-        
+    chatparty.adminchat:
+        description: Ability to use admin chat
+        default: op
